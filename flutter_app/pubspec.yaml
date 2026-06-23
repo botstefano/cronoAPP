@@ -1,0 +1,71 @@
+name: cronograma_app
+description: Aplicación para generar cronogramas de pago fraccionado
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP Client
+  dio: ^5.4.0
+
+  # State Management
+  provider: ^6.1.1
+
+  # Almacenamiento seguro
+  flutter_secure_storage: ^9.0.0
+  shared_preferences: ^2.2.2
+
+  # UI Components
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.9
+  lottie: ^3.0.0
+  shimmer: ^3.0.0
+
+  # PDF
+  pdf: ^3.10.7
+  printing: ^5.12.0
+  path_provider: ^2.1.2
+
+  # Gráficos
+  fl_chart: ^0.66.1
+
+  # Internacionalización
+  intl: ^0.19.0
+
+  # QR Scanner
+  mobile_scanner: ^4.0.1
+
+  # Share
+  share_plus: ^7.2.2
+
+  # SQLite (offline)
+  sqflite: ^2.3.2
+
+  # Firebase (push notifications)
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.9
+
+  # Íconos
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.7
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700
