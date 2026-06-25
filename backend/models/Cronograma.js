@@ -59,14 +59,14 @@ class Cronograma {
         .input('pageSize', sql.Int, pageSize)
         .query(
           `SELECT 
-             c.Documento, 
-             c.TipoDoc,
+             c.Documento AS documento, 
+             c.TipoDoc AS tipodoc,
              COUNT(c.NroCuota) AS totalCuotas,
              SUM(c.Importe) AS totalImporte,
              SUM(c.Importe + c.Interes + c.IgvInteres) AS totalConInteres,
              MIN(c.feVence) AS primerVencimiento,
              MAX(c.feVence) AS ultimoVencimiento,
-             d.Cliente
+             d.Cliente AS cliente
            FROM cronograma c
            LEFT JOIN documento d ON c.Documento = d.Documento AND c.TipoDoc = d.TipoDoc
            GROUP BY c.Documento, c.TipoDoc, d.Cliente

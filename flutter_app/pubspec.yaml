@@ -46,10 +46,6 @@ dependencies:
   # SQLite (offline)
   sqflite: ^2.3.2
 
-  # Firebase (push notifications)
-  firebase_core: ^2.24.2
-  firebase_messaging: ^14.7.9
-
   # Íconos
   cupertino_icons: ^1.0.6
 
@@ -63,9 +59,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-  fonts:
-    - family: Roboto
-      fonts:
-        - asset: assets/fonts/Roboto-Regular.ttf
-        - asset: assets/fonts/Roboto-Bold.ttf
-          weight: 700
+#  fonts:
+#    - family: Roboto
+#      fonts:
+#        - asset: assets/fonts/Roboto-Regular.ttf
+#        - asset: assets/fonts/Roboto-Bold.ttf
+#          weight: 700

@@ -1,10 +1,28 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
 import '../models/cronograma.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:3000/api'; // Cambiar en producción
+  // Tu IP local de Wi-Fi es 192.168.0.10. 
+  // Si vas a probar en un celular físico conectado al mismo Wi-Fi, descomenta la siguiente línea y úsala:
+  // static const String _hostIp = '192.168.0.10';
+  
+  static String get baseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:3000/api';
+    }
+    try {
+      if (Platform.isAndroid) {
+        // En emuladores Android, '10.0.2.2' redirecciona al localhost de la máquina de desarrollo
+        return 'http://10.0.2.2:3000/api';
+      }
+    } catch (_) {}
+    return 'http://localhost:3000/api';
+  }
+
   static const _storage = FlutterSecureStorage();
 
   late final Dio _dio;

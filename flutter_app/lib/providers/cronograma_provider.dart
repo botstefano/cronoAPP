@@ -41,9 +41,8 @@ class CronogramaProvider extends ChangeNotifier {
         nroCuotas: nroCuotas,
       );
       _status = CronogramaStatus.success;
-      notifyListeners();
-      // Refrescar historial en background
-      loadHistorial();
+      // Refrescar historial inmediatamente y esperar a que termine
+      await loadHistorial();
       return true;
     } catch (e) {
       _errorMessage = extractErrorMessage(e);
