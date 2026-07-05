@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const logger = require('../config/logger');
-const { sql, getPool } = require('../config/database');
+const { query } = require('../config/database');
 
 const authController = {
   /**
@@ -113,16 +113,12 @@ const authController = {
       const username = documento.trim();
 
       // 1. Verificar si el documento existe en la base de datos (tabla documento)
-      const pool = await getPool();
-      const docResult = await pool
-        .request()
-        .input('documento', sql.VarChar(20), username)
-        .input('tipodoc', sql.Char(1), tipodoc)
-        .query(
-          `SELECT Cliente FROM documento WHERE Documento = @documento AND TipoDoc = @tipodoc`
-        );
+      const docResult = await query(
+        `SELECT cliente FROM documento WHERE documento = $1 AND tipodoc = $2`,
+        [username, tipodoc]
+      );
 
-      const doc = docResult.recordset[0];
+      const doc = docResult.rows[0];
       if (!doc) {
         logger.warn(`Intento de registro fallido: documento ${username} (${tipodoc}) no existe.`);
         return res.status(400).json({
@@ -131,7 +127,19 @@ const authController = {
         });
       }
 
-      // 2. Verificar si el documento ya está registrado como usuario
+      const clienteId = doc.cliente;
+
+      // 2. Verificar si el cliente tiene deuda pendiente
+      const tieneDeuda = await User.clienteTieneDeuda(clienteId);
+      if (!tieneDeuda) {
+        logger.warn(`Intento de registro fallido: cliente ${clienteId} no tiene deuda pendiente.`);
+        return res.status(403).json({
+          success: false,
+          message: 'El cliente no tiene deuda pendiente. Solo pueden registrarse clientes con deudas.',
+        });
+      }
+
+      // 3. Verificar si el documento ya está registrado como usuario
       const existingUser = await User.findByUsername(username);
       if (existingUser) {
         logger.warn(`Intento de registro fallido: documento ${username} ya registrado.`);
@@ -141,16 +149,22 @@ const authController = {
         });
       }
 
-      // 3. Crear contraseña encriptada y registrar
+      // 4. Crear contraseña encriptada y registrar
       const passwordHash = await User.hashPassword(password);
-      const nombreCliente = doc.Cliente ? doc.Cliente.trim() : `Cliente ${username}`;
+      const nombreCliente = clienteId ? clienteId.trim() : `Cliente ${username}`;
 
       const created = await User.register(username, passwordHash, nombreCliente);
       if (!created) {
         throw new Error('No se pudo insertar el usuario');
       }
 
-      logger.info(`Usuario registrado exitosamente: ${username} (${nombreCliente})`);
+      // 5. Actualizar el usuario con el cliente_id
+      await query(
+        `UPDATE usuarios SET cliente_id = $1 WHERE username = $2`,
+        [clienteId, username]
+      );
+
+      logger.info(`Usuario registrado exitosamente: ${username} (${nombreCliente}, cliente: ${clienteId})`);
       res.status(201).json({
         success: true,
         message: 'Usuario registrado exitosamente',
@@ -174,13 +188,12 @@ const authController = {
       const userId = req.user.id;
 
       // 1. Obtener usuario actual para validar contraseña
-      const pool = await getPool();
-      const userResult = await pool
-        .request()
-        .input('id', sql.Int, userId)
-        .query('SELECT password_hash FROM usuarios WHERE id = @id');
+      const userResult = await query(
+        'SELECT password_hash FROM usuarios WHERE id = $1',
+        [userId]
+      );
       
-      const user = userResult.recordset[0];
+      const user = userResult.rows[0];
       if (!user) {
         return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
       }

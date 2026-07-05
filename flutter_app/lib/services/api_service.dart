@@ -6,11 +6,21 @@ import '../models/user.dart';
 import '../models/cronograma.dart';
 
 class ApiService {
+  // Configuración de entorno - Cambiar a true para producción
+  static const bool _isProduction = false;
+  
+  // URL de producción (Render) - Cambiar por tu URL real de Render
+  static const String _productionUrl = 'https://tu-app-render.onrender.com/api';
+  
   // Tu IP local de Wi-Fi es 192.168.0.10. 
   // Si vas a probar en un celular físico conectado al mismo Wi-Fi, descomenta la siguiente línea y úsala:
   // static const String _hostIp = '192.168.0.10';
   
   static String get baseUrl {
+    if (_isProduction) {
+      return _productionUrl;
+    }
+    
     if (kIsWeb) {
       return 'http://localhost:3000/api';
     }
