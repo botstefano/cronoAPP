@@ -53,4 +53,63 @@ class AuthProvider extends ChangeNotifier {
     _status = AuthStatus.unauthenticated;
     notifyListeners();
   }
+
+  Future<bool> register({
+    required String documento,
+    required String tipodoc,
+    required String password,
+  }) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _apiService.register(
+        documento: documento,
+        tipodoc: tipodoc,
+        password: password,
+      );
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = extractErrorMessage(e);
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateProfile({
+    required String nombre,
+    String? currentPassword,
+    String? newPassword,
+  }) async {
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _apiService.updateProfile(
+        nombre: nombre,
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+      // Actualizar el nombre local
+      if (_user != null) {
+        _user = User(
+          id: _user!.id,
+          username: _user!.username,
+          nombre: nombre,
+          token: _user!.token,
+        );
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = extractErrorMessage(e);
+      notifyListeners();
+      return false;
+    }
+  }
 }

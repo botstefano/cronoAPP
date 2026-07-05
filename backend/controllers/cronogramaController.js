@@ -9,9 +9,26 @@ const cronogramaController = {
   generar: async (req, res) => {
     const { documento, tipodoc, nroCuotas } = req.body;
     const user = req.user.username;
+    const userClient = req.user.nombre;
 
     try {
       logger.info(`[${user}] Generando cronograma: doc=${documento}, tipo=${tipodoc}, cuotas=${nroCuotas}`);
+
+      // Validar que el documento pertenece al usuario
+      const doc = await Cronograma.validarDocumento(documento, tipodoc);
+      if (!doc) {
+        return res.status(404).json({
+          success: false,
+          message: 'Documento ingresado no existe',
+        });
+      }
+      if (doc.Cliente !== userClient && doc.Documento.trim() !== user) {
+        logger.warn(`[${user}] Intento no autorizado de generar cronograma para doc=${documento}`);
+        return res.status(403).json({
+          success: false,
+          message: 'No tiene permisos para operar sobre este documento',
+        });
+      }
 
       const cuotas = await Cronograma.generar(documento, tipodoc, parseInt(nroCuotas));
 
@@ -82,8 +99,26 @@ const cronogramaController = {
    */
   consultar: async (req, res) => {
     const { documento, tipodoc } = req.params;
+    const user = req.user.username;
+    const userClient = req.user.nombre;
 
     try {
+      // Validar que el documento pertenece al usuario
+      const doc = await Cronograma.validarDocumento(documento, tipodoc);
+      if (!doc) {
+        return res.status(404).json({
+          success: false,
+          message: 'Documento no encontrado',
+        });
+      }
+      if (doc.Cliente !== userClient && doc.Documento.trim() !== user) {
+        logger.warn(`[${user}] Intento no autorizado de consultar cronograma para doc=${documento}`);
+        return res.status(403).json({
+          success: false,
+          message: 'No tiene permisos para ver este cronograma',
+        });
+      }
+
       const cuotas = await Cronograma.consultar(documento, tipodoc);
 
       if (!cuotas || cuotas.length === 0) {
@@ -125,8 +160,10 @@ const cronogramaController = {
     try {
       const page = parseInt(req.query.page) || 1;
       const pageSize = Math.min(parseInt(req.query.pageSize) || 20, 100);
+      const user = req.user.username;
+      const userClient = req.user.nombre;
 
-      const result = await Cronograma.historial(page, pageSize);
+      const result = await Cronograma.historial(userClient, user, page, pageSize);
 
       res.json({
         success: true,
@@ -177,6 +214,8 @@ const cronogramaController = {
    */
   validarDocumento: async (req, res) => {
     const { documento, tipodoc } = req.body;
+    const user = req.user.username;
+    const userClient = req.user.nombre;
 
     try {
       const doc = await Cronograma.validarDocumento(documento, tipodoc);
@@ -185,6 +224,15 @@ const cronogramaController = {
         return res.status(404).json({
           success: false,
           message: 'Documento no encontrado en el sistema',
+        });
+      }
+
+      // Validar pertenencia
+      if (doc.Cliente !== userClient && doc.Documento.trim() !== user) {
+        logger.warn(`[${user}] Intento no autorizado de validar documento doc=${documento}`);
+        return res.status(403).json({
+          success: false,
+          message: 'No tiene permisos sobre este documento',
         });
       }
 

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/validators.dart';
 import '../utils/app_theme.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -132,8 +133,9 @@ class _LoginScreenState extends State<LoginScreen>
                         TextFormField(
                           controller: _usernameCtrl,
                           decoration: const InputDecoration(
-                            labelText: 'Usuario',
-                            prefixIcon: Icon(Icons.person_outline),
+                            labelText: 'Número de Documento',
+                            prefixIcon: Icon(Icons.assignment_outlined),
+                            hintText: 'Ej. F00000001',
                           ),
                           validator: Validators.username,
                           textInputAction: TextInputAction.next,
@@ -175,6 +177,23 @@ class _LoginScreenState extends State<LoginScreen>
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold),
                                 ),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RegisterScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Registrar Cuenta',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Center(

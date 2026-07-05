@@ -13,6 +13,9 @@ class CronogramaProvider extends ChangeNotifier {
   Map<String, dynamic>? _parametros;
   String? _errorMessage;
   bool _loadingHistorial = false;
+  
+  Map<String, dynamic>? _documentoInfo;
+  bool _loadingDocumentoInfo = false;
 
   CronogramaStatus get status => _status;
   Cronograma? get cronogramaActual => _cronogramaActual;
@@ -21,8 +24,27 @@ class CronogramaProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get loadingHistorial => _loadingHistorial;
   bool get isLoading => _status == CronogramaStatus.loading;
+  
+  Map<String, dynamic>? get documentoInfo => _documentoInfo;
+  bool get loadingDocumentoInfo => _loadingDocumentoInfo;
 
   CronogramaProvider(this._apiService);
+
+  Future<void> loadDocumentoInfo(String documento, String tipodoc) async {
+    _loadingDocumentoInfo = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _documentoInfo = await _apiService.validarDocumento(documento, tipodoc);
+    } catch (e) {
+      _errorMessage = extractErrorMessage(e);
+      _documentoInfo = null;
+    } finally {
+      _loadingDocumentoInfo = false;
+      notifyListeners();
+    }
+  }
 
   Future<bool> generarCronograma({
     required String documento,
@@ -89,6 +111,7 @@ class CronogramaProvider extends ChangeNotifier {
 
   void limpiarCronograma() {
     _cronogramaActual = null;
+    _documentoInfo = null;
     _status = CronogramaStatus.idle;
     _errorMessage = null;
     notifyListeners();

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/cronograma_provider.dart';
 import '../utils/app_theme.dart';
 import '../widgets/loading_widget.dart';
+import 'cronograma_detalle_screen.dart';
 
 class HistorialScreen extends StatefulWidget {
   const HistorialScreen({super.key});
@@ -136,11 +137,17 @@ class _HistorialScreenState extends State<HistorialScreen> {
                                   ),
                                 const SizedBox(height: 8),
                                 OutlinedButton.icon(
-                                  onPressed: () {
-                                    crono.consultarCronograma(
+                                  onPressed: () async {
+                                    await crono.consultarCronograma(
                                         h.documento.trim(), h.tipodoc);
-                                    // Navegar a detalle
-                                    Navigator.pop(context);
+                                    if (context.mounted) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const CronogramaDetalleScreen(),
+                                        ),
+                                      );
+                                    }
                                   },
                                   icon: const Icon(Icons.visibility),
                                   label: const Text('Ver cronograma completo'),

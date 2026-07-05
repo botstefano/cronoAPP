@@ -1,0 +1,77 @@
+# Plan de Implementación: Portal de Clientes Autoservicio (Simulado)
+
+Este plan describe la transformación de la aplicación de cronogramas de pagos de una interfaz administrativa general a un **Portal de Autoservicio para Clientes**. Los clientes se registrarán e ingresarán utilizando sus códigos de documento de facturación y solo podrán visualizar y operar sobre sus propios datos.
+
+---
+
+## Cambios Propuestos
+
+### 1. Backend (Seguridad y Multi-inquilino)
+
+#### [MODIFY] [User.js](file:///c:/Users/UJED/Documents/appcrono/cronoAPP/backend/models/User.js)
+* Añadir un método `static async register(username, passwordHash, nombre)` para crear nuevos usuarios en la tabla `usuarios`.
+* Modificar `findByUsername` para asegurar la búsqueda por el documento (que actuará como username).
+
+#### [MODIFY] [authController.js](file:///c:/Users/UJED/Documents/appcrono/cronoAPP/backend/controllers/authController.js)
+* Añadir el método `register` para procesar el registro de usuarios:
+  1. Validar que el `(documento, tipodoc)` existe en la tabla `documento` de la base de datos corporativa.
+  2. Si no existe, rechazar con error `400` ("El documento no existe").
+  3. Si ya existe un usuario registrado para ese documento, rechazar con error `409` ("El documento ya está registrado").
+  4. Encriptar la contraseña usando `bcrypt`.
+  5. Obtener el nombre del `Cliente` correspondiente de la tabla `documento`.
+  6. Crear el registro en la tabla `usuarios` usando el cliente como `nombre` y el número de documento como `username`.
+
+#### [MODIFY] [authRoutes.js](file:///c:/Users/UJED/Documents/appcrono/cronoAPP/backend/routes/authRoutes.js)
+* Añadir la ruta `POST /api/auth/register` con validaciones para `documento` (máx 9 caracteres alfanuméricos), `tipodoc` (F, B o C), y `password` (mínimo 6 caracteres).
+
+#### [MODIFY] [Cronograma.js](file:///c:/Users/UJED/Documents/appcrono/cronoAPP/backend/models/Cronograma.js)
+* Modificar el método `historial` para aceptar los parámetros `cliente` y `documento`.
+* Actualizar las consultas SQL en `historial` para filtrar la selección y el recuento con la cláusula `WHERE d.Cliente = @cliente OR c.Documento = @documento`, limitando la visibilidad del historial a los documentos pertenecientes al cliente logueado.
+
+#### [MODIFY] [cronogramaController.js](file:///c:/Users/UJED/Documents/appcrono/cronoAPP/backend/controllers/cronogramaController.js)
+* En `generar`: Validar que el documento solicitado pertenezca al usuario autenticado (mediante verificación de coincidencia del nombre del cliente o código de documento). Si no coincide, responder con `403 Forbidden`.
+* En `consultar`: Implementar la misma validación de propiedad antes de retornar los detalles del cronograma.
+* En `validarDocumento`: Limitar la consulta para que el cliente solo pueda validar documentos que le pertenezcan.
+* En `historial`: Pasar `req.user.nombre` (nombre de cliente) y `req.user.username` (código de documento) a `Cronograma.historial(...)`.
+
+---
+
+### 2. Frontend (Flutter App)
+
+#### [MODIFY] [api_service.dart](file:///c:/Users/UJED/Documents/appcrono/cronoAPP/flutter_app/lib/services/api_service.dart)
+* Añadir método `register({required String documento, required String tipodoc, required String password})` para hacer la petición HTTP `POST /api/auth/register`.
+
+#### [MODIFY] [auth_provider.dart](file:///c:/Users/UJED/Documents/appcrono/cronoAPP/flutter_app/lib/providers/auth_provider.dart)
+* Añadir método `Future<bool> register({required String documento, required String tipodoc, required String password})` para invocar el registro de la API y gestionar el estado de carga y de errores.
+
+#### [MODIFY] [login_screen.dart](file:///c:/Users/UJED/Documents/appcrono/cronoAPP/flutter_app/lib/screens/login_screen.dart)
+* Cambiar las etiquetas del campo de texto de usuario por "Número de Documento".
+* Añadir un botón estilizado **"Registrarse"** en la parte inferior del formulario para navegar a la nueva pantalla de registro.
+
+#### [NEW] [register_screen.dart](file:///c:/Users/UJED/Documents/appcrono/cronoAPP/flutter_app/lib/screens/register_screen.dart)
+* Crear la pantalla de registro de clientes con los campos:
+  * **Documento:** Campo de texto con validaciones.
+  * **Tipo de Documento:** Menú desplegable (`F — Factura`, `B — Boleta`, `C — Comprobante`).
+  * **Contraseña:** Campo ocultable.
+  * **Confirmar Contraseña:** Validación de coincidencia.
+* Botón de registro que ejecuta la acción y redirige a inicio de sesión con alertas de retroalimentación de éxito o error.
+
+#### [MODIFY] [generar_cronograma_screen.dart](file:///c:/Users/UJED/Documents/appcrono/cronoAPP/flutter_app/lib/screens/generar_cronograma_screen.dart)
+* Auto-poblar el campo de **Documento** con el documento del usuario logueado (`authProvider.user.username`).
+* Deshabilitar o bloquear el campo de documento (`enabled: false` o `readOnly: true`), permitiendo al usuario únicamente simular/generar cronogramas sobre su propio documento registrado para una experiencia más fluida y segura.
+
+---
+
+## Plan de Verificación
+
+### Pruebas Automatizadas
+* Ejecutar las pruebas del backend usando `npm test` para asegurar que las modificaciones no rompan los flujos actuales.
+
+### Verificación Manual
+1. **Registro Inválido:** Intentar registrar un usuario con un documento falso (ej: `F99999999`). Debe arrojar error de "El documento ingresado no existe".
+2. **Registro Válido:** Registrarse usando un documento real disponible de la base de datos (ej. `F00000001` de tipo `F`). Debe registrarse con éxito.
+3. **Inicio de Sesión:** Iniciar sesión con el documento y contraseña creados. Debe dar la bienvenida con el nombre del cliente extraído (`Empresa XYZ`).
+4. **Seguridad Cruzada (Operaciones Propias):**
+   - El historial debe mostrar únicamente el documento del cliente autenticado.
+   - En la sección de generar cronograma, el documento debe estar bloqueado con su propio número.
+   - Intentar consultar por Postman u otra herramienta un cronograma de otro cliente (ej. `F00000002`) usando el token de `F00000001` y verificar que el servidor responda con código de estado `403`.

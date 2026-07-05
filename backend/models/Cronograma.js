@@ -49,12 +49,14 @@ class Cronograma {
   /**
    * Lista todos los cronogramas (agrupados por documento).
    */
-  static async historial(page = 1, pageSize = 20) {
+  static async historial(cliente, documento, page = 1, pageSize = 20) {
     try {
       const pool = await getPool();
       const offset = (page - 1) * pageSize;
       const result = await pool
         .request()
+        .input('cliente', sql.VarChar(100), cliente)
+        .input('documento', sql.VarChar(20), documento)
         .input('offset', sql.Int, offset)
         .input('pageSize', sql.Int, pageSize)
         .query(
@@ -69,14 +71,22 @@ class Cronograma {
              d.Cliente AS cliente
            FROM cronograma c
            LEFT JOIN documento d ON c.Documento = d.Documento AND c.TipoDoc = d.TipoDoc
+           WHERE d.Cliente = @cliente OR c.Documento = @documento
            GROUP BY c.Documento, c.TipoDoc, d.Cliente
            ORDER BY MIN(c.feVence) DESC
            OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY`
         );
       
-      const countResult = await pool.request().query(
-        `SELECT COUNT(DISTINCT Documento + TipoDoc) AS total FROM cronograma`
-      );
+      const countResult = await pool
+        .request()
+        .input('cliente', sql.VarChar(100), cliente)
+        .input('documento', sql.VarChar(20), documento)
+        .query(
+          `SELECT COUNT(DISTINCT c.Documento + c.TipoDoc) AS total 
+           FROM cronograma c
+           LEFT JOIN documento d ON c.Documento = d.Documento AND c.TipoDoc = d.TipoDoc
+           WHERE d.Cliente = @cliente OR c.Documento = @documento`
+        );
       
       return {
         data: result.recordset,

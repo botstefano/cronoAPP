@@ -26,12 +26,54 @@ class User {
     }
   }
 
+  static async register(username, passwordHash, nombre) {
+    try {
+      const pool = await getPool();
+      const result = await pool
+        .request()
+        .input('username', sql.VarChar(50), username)
+        .input('password_hash', sql.VarChar(255), passwordHash)
+        .input('nombre', sql.VarChar(100), nombre)
+        .query(
+          `INSERT INTO usuarios (username, password_hash, nombre, activo)
+           VALUES (@username, @password_hash, @nombre, 1)`
+        );
+      return result.rowsAffected[0] > 0;
+    } catch (error) {
+      logger.error(`Error registrando usuario ${username}: ${error.message}`);
+      throw error;
+    }
+  }
+
   static async validatePassword(plainPassword, hashedPassword) {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
   static async hashPassword(plainPassword) {
     return bcrypt.hash(plainPassword, 12);
+  }
+
+  static async updateProfile(id, nombre, passwordHash) {
+    try {
+      const pool = await getPool();
+      let query = 'UPDATE usuarios SET nombre = @nombre';
+      const request = pool.request()
+        .input('id', sql.Int, id)
+        .input('nombre', sql.VarChar(100), nombre);
+      
+      if (passwordHash) {
+        query += ', password_hash = @password_hash';
+        request.input('password_hash', sql.VarChar(255), passwordHash);
+      }
+      
+      query += ' WHERE id = @id';
+      
+      const result = await request.query(query);
+      return result.rowsAffected[0] > 0;
+    } catch (error) {
+      logger.error(`Error actualizando perfil de usuario ID ${id}: ${error.message}`);
+      throw error;
+    }
   }
 
   /**

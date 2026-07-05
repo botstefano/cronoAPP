@@ -21,10 +21,49 @@ router.post(
   authController.login
 );
 
+// POST /api/auth/register
+router.post(
+  '/register',
+  [
+    body('documento')
+      .trim()
+      .notEmpty().withMessage('El número de documento es requerido')
+      .isLength({ min: 1, max: 9 }).withMessage('El documento debe tener máximo 9 caracteres')
+      .matches(/^[A-Z0-9]+$/i).withMessage('El documento solo puede contener letras y números'),
+    body('tipodoc')
+      .trim()
+      .notEmpty().withMessage('El tipo de documento es requerido')
+      .isLength({ min: 1, max: 1 }).withMessage('El tipo de documento debe ser un carácter')
+      .isIn(['F', 'B', 'C']).withMessage('Tipo de documento inválido. Use F, B o C'),
+    body('password')
+      .notEmpty().withMessage('La contraseña es requerida')
+      .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres'),
+  ],
+  handleValidationErrors,
+  authController.register
+);
+
 // GET /api/auth/me (protegido)
 router.get('/me', authMiddleware, authController.me);
 
 // POST /api/auth/refresh (protegido)
 router.post('/refresh', authMiddleware, authController.refresh);
+
+// PUT /api/auth/profile (protegido)
+router.put(
+  '/profile',
+  authMiddleware,
+  [
+    body('nombre')
+      .trim()
+      .notEmpty().withMessage('El nombre es requerido')
+      .isLength({ min: 3, max: 100 }).withMessage('El nombre debe tener entre 3 y 100 caracteres'),
+    body('newPassword')
+      .optional({ checkFalsy: true })
+      .isLength({ min: 6 }).withMessage('La nueva contraseña debe tener al menos 6 caracteres'),
+  ],
+  handleValidationErrors,
+  authController.updateProfile
+);
 
 module.exports = router;

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
 import '../providers/cronograma_provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/validators.dart';
 import '../utils/app_theme.dart';
-import '../widgets/cuota_card.dart';
 import '../widgets/loading_widget.dart';
+import 'cronograma_detalle_screen.dart';
 
 class GenerarCronogramaScreen extends StatefulWidget {
   const GenerarCronogramaScreen({super.key});
@@ -23,11 +23,27 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
   final _cuotasCtrl = TextEditingController();
   String _tipodoc = 'F';
 
-  final List<Map<String, String>> _tiposDoc = [
-    {'value': 'F', 'label': 'F — Factura'},
-    {'value': 'B', 'label': 'B — Boleta'},
-    {'value': 'C', 'label': 'C — Comprobante'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = Provider.of<AuthProvider>(context, listen: false).user;
+      if (user != null) {
+        _documentoCtrl.text = user.username.trim();
+        String type = 'F';
+        if (user.username.isNotEmpty) {
+          final firstChar = user.username.substring(0, 1).toUpperCase();
+          if (['F', 'B', 'C'].contains(firstChar)) {
+            type = firstChar;
+          }
+        }
+        setState(() => _tipodoc = type);
+        
+        // Cargar información del documento y su deuda en segundo plano
+        context.read<CronogramaProvider>().loadDocumentoInfo(user.username, type);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -46,7 +62,16 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
       nroCuotas: int.parse(_cuotasCtrl.text.trim()),
     );
 
-    if (!success && mounted) {
+    if (success && mounted) {
+      // Navegar a la pantalla de detalle del cronograma recién generado
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const CronogramaDetalleScreen(),
+        ),
+      );
+      _cuotasCtrl.clear();
+    } else if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(crono.errorMessage ?? 'Error al generar cronograma'),
@@ -58,56 +83,25 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
     }
   }
 
-  void _limpiar() {
-    _formKey.currentState?.reset();
-    _documentoCtrl.clear();
-    _cuotasCtrl.clear();
-    setState(() => _tipodoc = 'F');
-    context.read<CronogramaProvider>().limpiarCronograma();
-  }
-
-  Future<void> _compartir() async {
-    final crono = context.read<CronogramaProvider>();
-    if (crono.cronogramaActual == null) return;
-
-    final c = crono.cronogramaActual!;
-    final currencyFormat = NumberFormat.currency(locale: 'es_PE', symbol: 'S/ ');
-    final dateFormat = DateFormat('dd/MM/yyyy');
-
-    final buffer = StringBuffer();
-    buffer.writeln('📋 CRONOGRAMA DE PAGO');
-    buffer.writeln('Documento: ${c.documento.trim()} (${c.tipoDocNombre})');
-    buffer.writeln('Total cuotas: ${c.totalCuotas}');
-    buffer.writeln('Total a pagar: ${currencyFormat.format(c.totalConInteres)}');
-    buffer.writeln('');
-    buffer.writeln('DETALLE:');
-    for (final cuota in c.cuotas) {
-      buffer.writeln(
-          'Cuota ${cuota.nroCuota}: ${currencyFormat.format(cuota.valorCuota)} — Vence: ${dateFormat.format(cuota.feVence)}');
-    }
-    buffer.writeln('');
-    buffer.writeln('Generado con CronoApp');
-
-    await Share.share(buffer.toString(),
-        subject: 'Cronograma de pago — ${c.documento.trim()}');
-  }
-
   @override
   Widget build(BuildContext context) {
     final crono = context.watch<CronogramaProvider>();
+    final auth = context.watch<AuthProvider>();
     final currencyFormat = NumberFormat.currency(locale: 'es_PE', symbol: 'S/ ');
 
+    String getTipoDocNombre(String type) {
+      switch (type) {
+        case 'F': return 'Factura';
+        case 'B': return 'Boleta';
+        case 'C': return 'Comprobante';
+        default: return type;
+      }
+    }
+
     return Scaffold(
+      backgroundColor: AppTheme.grisClaro,
       appBar: AppBar(
         title: const Text('Nuevo Cronograma'),
-        actions: [
-          if (crono.cronogramaActual != null)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _limpiar,
-              tooltip: 'Nuevo',
-            ),
-        ],
       ),
       body: Stack(
         children: [
@@ -116,6 +110,82 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // ─── Tarjeta Informativa Deuda ─────────────────────
+                if (crono.loadingDocumentoInfo)
+                  const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                  )
+                else if (crono.documentoInfo != null)
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.info_outline, color: AppTheme.azulMarino),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Deuda Pendiente',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 20),
+                          _InfoRow(
+                            label: 'Cliente',
+                            value: crono.documentoInfo!['cliente'] ?? auth.user?.nombre ?? '',
+                          ),
+                          _InfoRow(
+                            label: 'Documento',
+                            value: '${getTipoDocNombre(_tipodoc)}: ${_documentoCtrl.text}',
+                          ),
+                          _InfoRow(
+                            label: 'Total Deuda',
+                            value: currencyFormat.format(
+                              double.parse(crono.documentoInfo!['totalDeuda']?.toString() ?? '0.0'),
+                            ),
+                            isBold: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Card(
+                    color: AppTheme.rojoError.withOpacity(0.05),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: AppTheme.rojoError),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              crono.errorMessage ?? 'No se pudo obtener información del documento actual.',
+                              style: const TextStyle(color: AppTheme.rojoError),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 16),
+
                 // ─── Formulario ────────────────────────────────
                 Card(
                   child: Padding(
@@ -125,47 +195,10 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text('Datos del documento',
+                          const Text('Parámetros de Fraccionamiento',
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 20),
-
-                          // Documento
-                          TextFormField(
-                            controller: _documentoCtrl,
-                            decoration: const InputDecoration(
-                              labelText: 'N° Documento',
-                              hintText: 'Ej: 123456789',
-                              prefixIcon: Icon(Icons.document_scanner),
-                              helperText: 'Máximo 9 caracteres alfanuméricos',
-                            ),
-                            validator: Validators.documento,
-                            textCapitalization: TextCapitalization.characters,
-                            maxLength: 9,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[A-Za-z0-9]')),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Tipo documento
-                          DropdownButtonFormField<String>(
-                            value: _tipodoc,
-                            decoration: const InputDecoration(
-                              labelText: 'Tipo de Documento',
-                              prefixIcon: Icon(Icons.category),
-                            ),
-                            items: _tiposDoc
-                                .map((t) => DropdownMenuItem(
-                                      value: t['value'],
-                                      child: Text(t['label']!),
-                                    ))
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _tipodoc = v ?? 'F'),
-                          ),
-                          const SizedBox(height: 16),
 
                           // Número de cuotas
                           TextFormField(
@@ -174,7 +207,7 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
                               labelText: 'N° de Cuotas',
                               hintText: 'Entre 1 y 36',
                               prefixIcon: Icon(Icons.format_list_numbered),
-                              helperText: 'Máximo 36 cuotas',
+                              helperText: 'Elige en cuántas cuotas mensuales deseas pagar',
                             ),
                             validator: Validators.nroCuotas,
                             keyboardType: TextInputType.number,
@@ -185,7 +218,7 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
                           const SizedBox(height: 24),
 
                           ElevatedButton.icon(
-                            onPressed: crono.isLoading ? null : _generar,
+                            onPressed: (crono.isLoading || crono.documentoInfo == null) ? null : _generar,
                             icon: const Icon(Icons.auto_graph),
                             label: const Text(
                               'Generar Cronograma',
@@ -198,81 +231,6 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
                     ),
                   ),
                 ),
-
-                // ─── Resultado ─────────────────────────────────
-                if (crono.cronogramaActual != null) ...[
-                  const SizedBox(height: 20),
-
-                  // Header del cronograma
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.azulMarino,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '${crono.cronogramaActual!.tipoDocNombre} — ${crono.cronogramaActual!.documento.trim()}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _ResumenItem(
-                                label: 'Cuotas',
-                                value: crono.cronogramaActual!.totalCuotas
-                                    .toString()),
-                            _ResumenItem(
-                                label: 'Total',
-                                value: currencyFormat
-                                    .format(crono.cronogramaActual!.totalConInteres)),
-                            _ResumenItem(
-                                label: 'Interés',
-                                value: currencyFormat
-                                    .format(crono.cronogramaActual!.totalInteres)),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _compartir,
-                                icon: const Icon(Icons.share,
-                                    color: Colors.white),
-                                label: const Text('Compartir',
-                                    style: TextStyle(color: Colors.white)),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-                  const Text('Detalle de cuotas',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-
-                  ...crono.cronogramaActual!.cuotas.asMap().entries.map(
-                    (entry) => CuotaCard(
-                      cuota: entry.value,
-                      isProxima: entry.key == 0,
-                    ),
-                  ),
-                  const SizedBox(height: 80),
-                ],
               ],
             ),
           ),
@@ -285,26 +243,35 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
   }
 }
 
-class _ResumenItem extends StatelessWidget {
+class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
+  final bool isBold;
 
-  const _ResumenItem({required this.label, required this.value});
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    this.isBold = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(label,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+          Text(
+            value,
             style: TextStyle(
-                color: Colors.white.withOpacity(0.7), fontSize: 12)),
-        const SizedBox(height: 4),
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14)),
-      ],
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              fontSize: 13,
+              color: isBold ? AppTheme.azulMarino : Colors.grey[800],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -85,6 +85,30 @@ class ApiService {
     return token != null;
   }
 
+  Future<void> register({
+    required String documento,
+    required String tipodoc,
+    required String password,
+  }) async {
+    await _dio.post('/auth/register', data: {
+      'documento': documento,
+      'tipodoc': tipodoc,
+      'password': password,
+    });
+  }
+
+  Future<void> updateProfile({
+    required String nombre,
+    String? currentPassword,
+    String? newPassword,
+  }) async {
+    await _dio.put('/auth/profile', data: {
+      'nombre': nombre,
+      if (currentPassword != null && currentPassword.isNotEmpty) 'currentPassword': currentPassword,
+      if (newPassword != null && newPassword.isNotEmpty) 'newPassword': newPassword,
+    });
+  }
+
   // ─── CRONOGRAMA ───────────────────────────────────────────────
 
   Future<Cronograma> generarCronograma({
