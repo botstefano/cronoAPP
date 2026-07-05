@@ -140,6 +140,29 @@ class Cronograma {
       throw error;
     }
   }
+
+  /**
+   * Registra el pago simulado de una cuota de cronograma.
+   */
+  static async registrarPago(documento, tipodoc, nroCuota) {
+    try {
+      const pool = await getPool();
+      const result = await pool
+        .request()
+        .input('documento', sql.VarChar(20), documento)
+        .input('tipodoc', sql.Char(1), tipodoc)
+        .input('nroCuota', sql.Int, nroCuota)
+        .query(
+          `UPDATE cronograma
+           SET estado = 'c', Fepago = GETDATE()
+           WHERE Documento = @documento AND TipoDoc = @tipodoc AND NroCuota = @nroCuota`
+        );
+      return result.rowsAffected[0] > 0;
+    } catch (error) {
+      logger.error(`Error registrando pago de cuota: ${error.message}`);
+      throw error;
+    }
+  }
 }
 
 module.exports = Cronograma;

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cronograma_provider.dart';
+import '../models/cronograma.dart';
 import '../utils/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/cuota_card.dart';
@@ -347,9 +348,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     itemCount: crono.cronogramaActual!.cuotas.length,
                     itemBuilder: (context, index) {
                       final cuota = crono.cronogramaActual!.cuotas[index];
+                      final indexPrimerPendiente = crono.cronogramaActual!.cuotas
+                          .indexWhere((c) => c.estado.toLowerCase() == 'p');
+                      final isDeTurno = index == indexPrimerPendiente;
+                      final isProxima = index == indexPrimerPendiente;
+
                       return CuotaCard(
                         cuota: cuota,
-                        isProxima: index == 0,
+                        isProxima: isProxima,
+                        isCuotaDeTurno: isDeTurno,
+                        onPayPressed: () => _confirmarPago(context, crono, cuota),
                       );
                     },
                   )
@@ -398,6 +406,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _confirmarPago(BuildContext context, CronogramaProvider provider, Cuota cuota) {
+    final currencyFormat = NumberFormat.currency(locale: 'es_PE', symbol: 'S/ ');
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Simular Pago de Cuota'),
+        content: Text('¿Está seguro de simular el pago de la Cuota N° ${cuota.nroCuota} por un importe total de ${currencyFormat.format(cuota.valorCuota)}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final doc = provider.cronogramaActual!.documento;
+              final type = provider.cronogramaActual!.tipodoc;
+              final success = await provider.pagarCuota(doc, type, cuota.nroCuota);
+              if (context.mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Pago de la Cuota N° ${cuota.nroCuota} registrado con éxito.'),
+                      backgroundColor: AppTheme.verdePago,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(provider.errorMessage ?? 'Error al procesar pago'),
+                      backgroundColor: AppTheme.rojoError,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Confirmar Pago'),
+          ),
+        ],
       ),
     );
   }

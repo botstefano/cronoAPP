@@ -5,6 +5,7 @@ class Cuota {
   final double igvInteres;
   final double valorCuota;
   final DateTime feVence;
+  final String estado; // 'p' = pendiente, 'c' = cancelado/pagado
 
   Cuota({
     required this.nroCuota,
@@ -13,6 +14,7 @@ class Cuota {
     required this.igvInteres,
     required this.valorCuota,
     required this.feVence,
+    required this.estado,
   });
 
   factory Cuota.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class Cuota {
       igvInteres: double.parse(json['igvInteres'].toString()),
       valorCuota: double.parse(json['valorCuota'].toString()),
       feVence: DateTime.parse(json['feVence']),
+      estado: json['estado'] ?? 'p',
     );
   }
 
@@ -33,6 +36,7 @@ class Cuota {
         'igvInteres': igvInteres,
         'valorCuota': valorCuota,
         'feVence': feVence.toIso8601String(),
+        'estado': estado,
       };
 }
 

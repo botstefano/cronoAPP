@@ -125,6 +125,18 @@ class ApiService {
     return Cronograma.fromJson(response.data['data']);
   }
 
+  Future<void> pagarCuota({
+    required String documento,
+    required String tipodoc,
+    required int nroCuota,
+  }) async {
+    await _dio.post('/cronograma/pagar', data: {
+      'documento': documento,
+      'tipodoc': tipodoc,
+      'nroCuota': nroCuota,
+    });
+  }
+
   Future<Cronograma> consultarCronograma(String documento, String tipodoc) async {
     final response = await _dio.get('/cronograma/$documento/$tipodoc');
     return Cronograma.fromJson(response.data['data']);

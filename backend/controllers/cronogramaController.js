@@ -251,6 +251,85 @@ const cronogramaController = {
       res.status(500).json({ success: false, message: 'Error interno' });
     }
   },
+
+  /**
+   * POST /api/cronograma/pagar
+   * Body: { documento, tipodoc, nroCuota }
+   */
+  pagarCuota: async (req, res) => {
+    const { documento, tipodoc, nroCuota } = req.body;
+    const user = req.user.username;
+    const userClient = req.user.nombre;
+    const cuotaNum = parseInt(nroCuota);
+
+    try {
+      logger.info(`[${user}] Intentando pagar cuota: doc=${documento}, tipo=${tipodoc}, cuota=${cuotaNum}`);
+
+      // 1. Validar pertenencia del documento
+      const doc = await Cronograma.validarDocumento(documento, tipodoc);
+      if (!doc) {
+        return res.status(404).json({
+          success: false,
+          message: 'Documento no encontrado',
+        });
+      }
+      if (doc.Cliente !== userClient && doc.Documento.trim() !== user) {
+        logger.warn(`[${user}] Intento no autorizado de pagar cuota para doc=${documento}`);
+        return res.status(403).json({
+          success: false,
+          message: 'No tiene permisos para pagar cuotas de este documento',
+        });
+      }
+
+      // 2. Obtener cuotas actuales del cronograma
+      const cuotas = await Cronograma.consultar(documento, tipodoc);
+      if (!cuotas || cuotas.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'No se encontró cronograma para este documento',
+        });
+      }
+
+      // 3. Encontrar la primera cuota pendiente (cuota de turno)
+      const cuotasPendientes = cuotas.filter(c => !c.estado || c.estado.toLowerCase() === 'p');
+      if (cuotasPendientes.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'El cronograma ya se encuentra totalmente cancelado',
+        });
+      }
+
+      // Ordenar por número de cuota
+      cuotasPendientes.sort((a, b) => a.NroCuota - b.NroCuota);
+      const cuotaDeTurno = cuotasPendientes[0];
+
+      // 4. Verificar si la cuota solicitada es de turno
+      if (cuotaNum !== cuotaDeTurno.NroCuota) {
+        return res.status(400).json({
+          success: false,
+          message: `Debe pagar la cuota de turno correspondiente. La cuota a pagar actualmente es la N° ${cuotaDeTurno.NroCuota}.`,
+        });
+      }
+
+      // 5. Registrar el pago
+      const exito = await Cronograma.registrarPago(documento, tipodoc, cuotaNum);
+      if (!exito) {
+        return res.status(500).json({
+          success: false,
+          message: 'No se pudo procesar el pago de la cuota',
+        });
+      }
+
+      logger.info(`[${user}] Pago registrado exitosamente para doc=${documento}, cuota=${cuotaNum}`);
+      res.json({
+        success: true,
+        message: `La cuota N° ${cuotaNum} fue cancelada exitosamente.`,
+      });
+    } catch (error) {
+      logger.error(`[${user}] Error pagando cuotas: ${error.message}`);
+      res.status(500).json({ success: false, message: 'Error interno del servidor' });
+    }
+  },
 };
 
 module.exports = cronogramaController;

@@ -76,4 +76,24 @@ router.post(
   cronogramaController.validarDocumento
 );
 
+// POST /api/cronograma/pagar
+router.post(
+  '/pagar',
+  [
+    body('documento')
+      .trim()
+      .notEmpty().withMessage('El documento es requerido')
+      .isLength({ min: 1, max: 9 }).withMessage('Documento inválido'),
+    body('tipodoc')
+      .trim()
+      .notEmpty().withMessage('El tipo de documento es requerido')
+      .isIn(['F', 'B', 'C']).withMessage('Tipo inválido'),
+    body('nroCuota')
+      .notEmpty().withMessage('El número de cuota es requerido')
+      .isInt({ min: 1 }).withMessage('Número de cuota debe ser un número entero válido'),
+  ],
+  handleValidationErrors,
+  cronogramaController.pagarCuota
+);
+
 module.exports = router;

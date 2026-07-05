@@ -6,14 +6,22 @@ import '../utils/app_theme.dart';
 class CuotaCard extends StatelessWidget {
   final Cuota cuota;
   final bool isProxima;
+  final bool isCuotaDeTurno;
+  final VoidCallback? onPayPressed;
 
-  const CuotaCard({super.key, required this.cuota, this.isProxima = false});
+  const CuotaCard({
+    super.key,
+    required this.cuota,
+    this.isProxima = false,
+    this.isCuotaDeTurno = false,
+    this.onPayPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat.currency(locale: 'es_PE', symbol: 'S/ ');
     final dateFormat = DateFormat('dd/MM/yyyy');
-    final vencida = cuota.feVence.isBefore(DateTime.now());
+    final vencida = cuota.feVence.isBefore(DateTime.now()) && cuota.estado.toLowerCase() != 'c';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -137,6 +145,87 @@ class CuotaCard extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Estado / Badge
+                if (cuota.estado.toLowerCase() == 'c')
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.verdePago.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle, color: AppTheme.verdePago, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'PAGADA',
+                          style: TextStyle(
+                            color: AppTheme.verdePago,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else ...[
+                  // Pendiente
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isCuotaDeTurno
+                          ? AppTheme.naranjaAlerta.withOpacity(0.12)
+                          : Colors.grey.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isCuotaDeTurno ? Icons.play_circle_outline : Icons.lock_outline,
+                          color: isCuotaDeTurno ? AppTheme.naranjaAlerta : Colors.grey,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isCuotaDeTurno ? 'SIGUIENTE A PAGAR' : 'BLOQUEADA',
+                          style: TextStyle(
+                            color: isCuotaDeTurno ? AppTheme.naranjaAlerta : Colors.grey[700],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Botón de Pago si es la cuota de turno activa
+                  if (isCuotaDeTurno && onPayPressed != null)
+                    ElevatedButton.icon(
+                      onPressed: onPayPressed,
+                      icon: const Icon(Icons.payment, size: 16),
+                      label: const Text(
+                        'PAGAR',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.azulMarino,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        minimumSize: Size.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                ],
+              ],
             ),
           ],
         ),

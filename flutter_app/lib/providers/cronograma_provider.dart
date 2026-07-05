@@ -109,6 +109,33 @@ class CronogramaProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
+  Future<bool> pagarCuota(String documento, String tipodoc, int nroCuota) async {
+    _status = CronogramaStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _apiService.pagarCuota(
+        documento: documento,
+        tipodoc: tipodoc,
+        nroCuota: nroCuota,
+      );
+      
+      // Recargar cronograma actual para actualizar estado
+      _cronogramaActual = await _apiService.consultarCronograma(documento, tipodoc);
+      _status = CronogramaStatus.success;
+      
+      // Recargar historial para actualizar totales/fechas en el listado
+      await loadHistorial();
+      return true;
+    } catch (e) {
+      _errorMessage = extractErrorMessage(e);
+      _status = CronogramaStatus.error;
+      notifyListeners();
+      return false;
+    }
+  }
+
   void limpiarCronograma() {
     _cronogramaActual = null;
     _documentoInfo = null;
