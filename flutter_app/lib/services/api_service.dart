@@ -7,10 +7,10 @@ import '../models/cronograma.dart';
 
 class ApiService {
   // Configuración de entorno - Cambiar a true para producción
-  static const bool _isProduction = false;
+  static const bool _isProduction = true;
   
   // URL de producción (Render) - Cambiar por tu URL real de Render
-  static const String _productionUrl = 'https://tu-app-render.onrender.com/api';
+  static const String _productionUrl = 'https://cronoapp-backend.onrender.com/api';
   
   // Tu IP local de Wi-Fi es 192.168.0.10. 
   // Si vas a probar en un celular físico conectado al mismo Wi-Fi, descomenta la siguiente línea y úsala:
