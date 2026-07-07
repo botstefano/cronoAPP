@@ -9,7 +9,7 @@ class ApiService {
   // Configuración de entorno - Cambiar a true para producción
   static const bool _isProduction = true;
   
-  // URL de producción (Render) - Cambiar por tu URL real de Render
+  // URL de producción (Render)
   static const String _productionUrl = 'https://cronoapp-backend.onrender.com/api';
   
   // Tu IP local de Wi-Fi es 192.168.0.10. 

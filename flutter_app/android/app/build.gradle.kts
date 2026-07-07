@@ -13,25 +13,52 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
+    
+    buildFeatures {
+        buildConfig = true
+    }
+    
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.cronograma_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 29 // Android 10 (API 29)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // Reducir densidad de memoria para dispositivos low-end
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Usar debug keystore para facilitar instalación
             signingConfig = signingConfigs.getByName("debug")
+            
+            // Habilitar optimizaciones para reducir tamaño y memoria
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
+    
+    // Split APK por ABI para reducir tamaño de descarga
+    // Deshabilitado para evitar conflictos, usando ndk abiFilters en su lugar
+    /*
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a")
+            isUniversalApk = false
+        }
+    }
+    */
 }
 
 kotlin {
