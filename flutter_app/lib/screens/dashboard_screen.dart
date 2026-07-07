@@ -10,6 +10,7 @@ import '../widgets/loading_widget.dart';
 import '../widgets/cuota_card.dart';
 import 'generar_cronograma_screen.dart';
 import 'profile_screen.dart';
+import 'cronograma_detalle_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,13 +19,27 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _refreshData();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshData();
+    }
   }
 
   Future<void> _refreshData() async {
@@ -329,12 +344,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       'Tus Cuotas de Pago',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.azulMarino),
                     ),
-                    if (crono.cronogramaActual != null)
-                      IconButton(
-                        icon: const Icon(Icons.share, color: AppTheme.azulMarino),
-                        onPressed: () => _compartir(crono.cronogramaActual),
-                        tooltip: 'Compartir cronograma',
-                      ),
+                    Row(
+                      children: [
+                        if (crono.cronogramaActual != null)
+                          IconButton(
+                            icon: const Icon(Icons.share, color: AppTheme.azulMarino),
+                            onPressed: () => _compartir(crono.cronogramaActual),
+                            tooltip: 'Compartir cronograma',
+                          ),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final item = crono.historial.first;
+                            await crono.consultarCronograma(item.documento, item.tipodoc);
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const CronogramaDetalleScreen(),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.visibility, color: AppTheme.azulMarino),
+                          label: const Text('Ver completo'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppTheme.azulMarino,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
