@@ -4,7 +4,6 @@ const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/auth');
 const { handleValidationErrors } = require('../middleware/validation');
-const bcrypt = require('bcryptjs');
 
 // POST /api/auth/login
 router.post(
@@ -66,35 +65,5 @@ router.put(
   handleValidationErrors,
   authController.updateProfile
 );
-
-// TEMPORAL: Endpoint para actualizar contraseña de prueba
-// DELETE ESTE ENDPOINT DESPUÉS DE USAR
-router.post('/reset-test-password', async (req, res) => {
-  try {
-    const { query } = require('../config/database');
-    const hash = bcrypt.hashSync('Cliente123!', 10);
-    
-    const result = await query(
-      `UPDATE usuarios 
-       SET password_hash = $1
-       WHERE username = $2
-       RETURNING username, nombre`,
-      [hash, 'F00100001']
-    );
-    
-    if (result.rowCount > 0) {
-      res.json({
-        success: true,
-        message: 'Contraseña actualizada',
-        user: result.rows[0],
-        hash: hash
-      });
-    } else {
-      res.status(404).json({ success: false, message: 'Usuario no encontrado' });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
 
 module.exports = router;
