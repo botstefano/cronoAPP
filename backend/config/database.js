@@ -1,4 +1,8 @@
 const { Pool } = require('pg');
+const dns = require('dns');
+
+// Configurar DNS para usar solo IPv4
+dns.setDefaultResultOrder('ipv4first');
 
 const pool = new Pool({
   host: process.env.DB_SERVER || 'localhost',
