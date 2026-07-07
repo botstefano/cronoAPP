@@ -6,8 +6,8 @@ const pool = new Pool({
   database: process.env.DB_DATABASE || 'postgres',
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  // SSL deshabilitado temporalmente para probar conexión IPv6
-  ssl: false,
+  // SSL requerido para Supabase Pooler
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   max: 10,
   min: 0,
   connectionTimeoutMillis: 30000,
