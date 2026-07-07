@@ -198,8 +198,8 @@ const cronogramaController = {
       res.json({
         success: true,
         data: {
-          igv: parseFloat(params.Igv),
-          tasaInteres: parseFloat(params.TasaInt),
+          igv: parseFloat(params.igv),
+          tasaInteres: parseFloat(params.tasaint),
         },
       });
     } catch (error) {
