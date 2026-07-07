@@ -113,6 +113,6 @@ BEGIN
         idbanco
     FROM cronograma c
     WHERE c.documento = p_documento AND c.tipodoc = p_tipodoc
-    ORDER BY nrocuota;
+    ORDER BY c.nrocuota;
 END;
 $$ LANGUAGE plpgsql;
