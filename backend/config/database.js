@@ -7,6 +7,7 @@ const pool = new Pool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  family: 4, // Forzar IPv4 para evitar problemas con IPv6
   max: 10,
   min: 0,
   connectionTimeoutMillis: 30000,
