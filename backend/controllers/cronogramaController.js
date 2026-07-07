@@ -33,12 +33,12 @@ const cronogramaController = {
       const cuotas = await Cronograma.generar(documento, tipodoc, parseInt(nroCuotas));
 
       const cronogramaFormateado = cuotas.map((c) => ({
-        nroCuota: c.NroCuota,
-        importe: parseFloat(c.Importe).toFixed(2),
-        interes: parseFloat(c.Interes).toFixed(2),
-        igvInteres: parseFloat(c.IgvInteres).toFixed(2),
-        valorCuota: parseFloat(c.ValorCuota).toFixed(2),
-        feVence: c.feVence,
+        nroCuota: c.nrocuota,
+        importe: parseFloat(c.importe).toFixed(2),
+        interes: parseFloat(c.interes).toFixed(2),
+        igvInteres: parseFloat(c.igvinteres).toFixed(2),
+        valorCuota: (parseFloat(c.importe) + parseFloat(c.interes) + parseFloat(c.igvinteres)).toFixed(2),
+        feVence: c.fevence,
         estado: c.estado,
       }));
 
@@ -129,12 +129,12 @@ const cronogramaController = {
       }
 
       const cronogramaFormateado = cuotas.map((c) => ({
-        nroCuota: c.NroCuota,
-        importe: parseFloat(c.Importe).toFixed(2),
-        interes: parseFloat(c.Interes).toFixed(2),
-        igvInteres: parseFloat(c.IgvInteres).toFixed(2),
-        valorCuota: parseFloat(c.ValorCuota).toFixed(2),
-        feVence: c.feVence,
+        nroCuota: c.nrocuota,
+        importe: parseFloat(c.importe).toFixed(2),
+        interes: parseFloat(c.interes).toFixed(2),
+        igvInteres: parseFloat(c.igvinteres).toFixed(2),
+        valorCuota: (parseFloat(c.importe) + parseFloat(c.interes) + parseFloat(c.igvinteres)).toFixed(2),
+        feVence: c.fevence,
         estado: c.estado,
       }));
 
