@@ -4,7 +4,7 @@ const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/auth');
 const { handleValidationErrors } = require('../middleware/validation');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // POST /api/auth/login
 router.post(
