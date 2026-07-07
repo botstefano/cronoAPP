@@ -1,8 +1,4 @@
 const { Pool } = require('pg');
-const dns = require('dns');
-
-// Configurar DNS para usar solo IPv4
-dns.setDefaultResultOrder('ipv4first');
 
 const pool = new Pool({
   host: process.env.DB_SERVER || 'localhost',
@@ -10,8 +6,8 @@ const pool = new Pool({
   database: process.env.DB_DATABASE || 'postgres',
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  family: 4, // Forzar IPv4 para evitar problemas con IPv6
+  // SSL deshabilitado temporalmente para probar conexión IPv6
+  ssl: false,
   max: 10,
   min: 0,
   connectionTimeoutMillis: 30000,

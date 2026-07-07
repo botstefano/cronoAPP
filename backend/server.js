@@ -14,8 +14,9 @@ const cronogramaRoutes = require('./routes/cronogramaRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Trust proxy para Render - deshabilitado por ahora para evitar errores de rate limiting
-// app.set('trust proxy', true);
+// Trust proxy para Render - configuración específica para evitar bypass de rate limiting
+// Usamos 1 para confiar en el primer proxy (Render)
+app.set('trust proxy', 1);
 
 // ─── Seguridad ───────────────────────────────────────────────
 app.use(helmet());
