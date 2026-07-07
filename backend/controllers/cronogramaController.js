@@ -22,7 +22,7 @@ const cronogramaController = {
           message: 'Documento ingresado no existe',
         });
       }
-      if (doc.Cliente !== userClient && doc.Documento.trim() !== user) {
+      if (doc.cliente !== userClient && doc.documento.trim() !== user) {
         logger.warn(`[${user}] Intento no autorizado de generar cronograma para doc=${documento}`);
         return res.status(403).json({
           success: false,
@@ -111,7 +111,7 @@ const cronogramaController = {
           message: 'Documento no encontrado',
         });
       }
-      if (doc.Cliente !== userClient && doc.Documento.trim() !== user) {
+      if (doc.cliente !== userClient && doc.documento.trim() !== user) {
         logger.warn(`[${user}] Intento no autorizado de consultar cronograma para doc=${documento}`);
         return res.status(403).json({
           success: false,
@@ -228,7 +228,7 @@ const cronogramaController = {
       }
 
       // Validar pertenencia
-      if (doc.Cliente !== userClient && doc.Documento.trim() !== user) {
+      if (doc.cliente !== userClient && doc.documento.trim() !== user) {
         logger.warn(`[${user}] Intento no autorizado de validar documento doc=${documento}`);
         return res.status(403).json({
           success: false,
@@ -239,11 +239,11 @@ const cronogramaController = {
       res.json({
         success: true,
         data: {
-          documento: doc.Documento.trim(),
-          tipodoc: doc.TipoDoc,
-          cliente: doc.Cliente,
+          documento: doc.documento.trim(),
+          tipodoc: doc.tipodoc,
+          cliente: doc.cliente,
           pagado: parseFloat(doc.pagado || 0).toFixed(2),
-          totalDeuda: parseFloat(doc.totalDeuda || 0).toFixed(2),
+          totalDeuda: parseFloat(doc.totaldeuda || 0).toFixed(2),
         },
       });
     } catch (error) {
@@ -273,7 +273,7 @@ const cronogramaController = {
           message: 'Documento no encontrado',
         });
       }
-      if (doc.Cliente !== userClient && doc.Documento.trim() !== user) {
+      if (doc.cliente !== userClient && doc.documento.trim() !== user) {
         logger.warn(`[${user}] Intento no autorizado de pagar cuota para doc=${documento}`);
         return res.status(403).json({
           success: false,
