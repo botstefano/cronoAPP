@@ -44,8 +44,8 @@ BEGIN
     
     -- Verificar si ya existe cronograma
     IF EXISTS (
-        SELECT 1 FROM cronograma 
-        WHERE documento = p_documento AND tipodoc = p_tipodoc
+        SELECT 1 FROM cronograma c
+        WHERE c.documento = p_documento AND c.tipodoc = p_tipodoc
     ) THEN
         RAISE EXCEPTION 'El cronograma ya fue generado para este documento';
     END IF;
@@ -98,7 +98,7 @@ BEGIN
     
     -- Retornar el cronograma generado
     RETURN QUERY
-    SELECT 
+    SELECT
         nrocuota,
         documento,
         tipodoc,
@@ -111,8 +111,8 @@ BEGIN
         idmediopago,
         idpunto,
         idbanco
-    FROM cronograma
-    WHERE documento = p_documento AND tipodoc = p_tipodoc
+    FROM cronograma c
+    WHERE c.documento = p_documento AND c.tipodoc = p_tipodoc
     ORDER BY nrocuota;
 END;
 $$ LANGUAGE plpgsql;
