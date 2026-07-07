@@ -55,8 +55,8 @@ BEGIN
     
     -- Obtener fecha inicial (fecha del documento)
     SELECT fecha INTO v_fechainicio
-    FROM documento
-    WHERE documento = p_documento AND tipodoc = p_tipodoc;
+    FROM documento d
+    WHERE d.documento = p_documento AND d.tipodoc = p_tipodoc;
     
     -- Generar cuotas
     FOR v_i IN 1..p_nrocuotas LOOP
