@@ -56,6 +56,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> register({
     required String cliente,
+    required String nombre,
     required String password,
   }) async {
     _status = AuthStatus.loading;
@@ -65,6 +66,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _apiService.register(
         cliente: cliente,
+        nombre: nombre,
         password: password,
       );
       _status = AuthStatus.unauthenticated;

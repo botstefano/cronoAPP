@@ -110,8 +110,9 @@ const authController = {
    */
   register: async (req, res) => {
     try {
-      const { cliente, password } = req.body;
+      const { cliente, password, nombre } = req.body;
       const clienteId = cliente.trim().toUpperCase();
+      const nombreCliente = nombre?.trim() || `Cliente ${clienteId}`;
 
       // 1. Verificar si el cliente existe en la base de datos (tabla documento)
       const docResult = await query(
@@ -149,7 +150,6 @@ const authController = {
 
       // 4. Crear contraseña encriptada y registrar
       const passwordHash = await User.hashPassword(password);
-      const nombreCliente = `Cliente ${clienteId}`;
 
       const created = await User.register(clienteId, passwordHash, nombreCliente, clienteId);
       if (!created) {

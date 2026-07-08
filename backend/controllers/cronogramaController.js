@@ -241,7 +241,7 @@ const cronogramaController = {
   validarDocumento: async (req, res) => {
     const { documento, tipodoc } = req.body;
     const user = req.user.username;
-    const userClient = req.user.nombre;
+    const userClient = req.user.clienteId; // Usar clienteId del JWT
 
     try {
       const doc = await Cronograma.validarDocumento(documento, tipodoc);
@@ -254,8 +254,8 @@ const cronogramaController = {
       }
 
       // Validar pertenencia
-      if (doc.cliente !== userClient && doc.documento.trim() !== user) {
-        logger.warn(`[${user}] Intento no autorizado de validar documento doc=${documento}`);
+      if (doc.cliente !== userClient) {
+        logger.warn(`[${user}] Intento no autorizado de validar documento doc=${documento} (cliente=${doc.cliente})`);
         return res.status(403).json({
           success: false,
           message: 'No tiene permisos sobre este documento',

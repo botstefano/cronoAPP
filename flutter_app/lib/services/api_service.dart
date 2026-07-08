@@ -97,10 +97,12 @@ class ApiService {
 
   Future<void> register({
     required String cliente,
+    required String nombre,
     required String password,
   }) async {
     await _dio.post('/auth/register', data: {
       'cliente': cliente,
+      'nombre': nombre,
       'password': password,
     });
   }
