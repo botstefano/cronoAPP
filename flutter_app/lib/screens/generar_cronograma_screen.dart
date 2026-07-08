@@ -121,6 +121,10 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
       backgroundColor: AppTheme.grisClaro,
       appBar: AppBar(
         title: const Text('Nuevo Cronograma'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Stack(
         children: [
