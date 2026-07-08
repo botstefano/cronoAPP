@@ -148,24 +148,23 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ─── CASO 1: NO TIENE CRONOGRAMA GENERADO ───────────────────
-              if (!tieneCronograma) ...[
-                if (crono.loadingDocumentosCliente)
-                  const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Center(
-                        child: Column(
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text('Cargando tus documentos...'),
-                          ],
-                        ),
+              // ─── LISTA DE DOCUMENTOS (SIEMPRE VISIBLE) ───────────────────
+              if (crono.loadingDocumentosCliente)
+                const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Cargando tus documentos...'),
+                        ],
                       ),
                     ),
-                  )
-                else if (crono.documentosCliente.isNotEmpty)
+                  ),
+                )
+              else if (crono.documentosCliente.isNotEmpty)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -283,213 +282,9 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                     ),
                   ),
               ],
-
-              // ─── CASO 2: SÍ TIENE CRONOGRAMA GENERADO ───────────────────
-              if (tieneCronograma) ...[
-                // Tarjetas de Resumen del Cronograma
-                Row(
-                  children: [
-                    _SummaryCard(
-                      icon: Icons.receipt_long,
-                      label: 'N° de Cuotas',
-                      value: crono.historial.first.totalCuotas.toString(),
-                      color: AppTheme.azulMarino,
-                    ),
-                    const SizedBox(width: 12),
-                    _SummaryCard(
-                      icon: Icons.monetization_on,
-                      label: 'Total con Intereses',
-                      value: currencyFormat.format(crono.historial.first.totalConInteres),
-                      color: AppTheme.verdePago,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Próximo Vencimiento
-                if (proximaFecha != null && proximoMonto != null)
-                  Card(
-                    color: AppTheme.naranjaAlerta.withOpacity(0.08),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: BorderSide(color: AppTheme.naranjaAlerta.withOpacity(0.3)),
-                    ),
-                    child: ListTile(
-                      leading: const Icon(Icons.notifications_active, color: AppTheme.naranjaAlerta, size: 28),
-                      title: const Text(
-                        'Próxima Cuota por Vencer',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                      subtitle: Text(
-                        'Vence: ${dateFormat.format(proximaFecha)}',
-                        style: const TextStyle(color: AppTheme.naranjaAlerta, fontSize: 13),
-                      ),
-                      trailing: Text(
-                        currencyFormat.format(proximoMonto),
-                        style: const TextStyle(
-                          color: AppTheme.naranjaAlerta,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                
-                const SizedBox(height: 20),
-
-                // Calendario de Pagos Inline
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Tus Cuotas de Pago',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.azulMarino),
-                    ),
-                    Row(
-                      children: [
-                        if (crono.cronogramaActual != null)
-                          IconButton(
-                            icon: const Icon(Icons.share, color: AppTheme.azulMarino),
-                            onPressed: () => _compartir(crono.cronogramaActual),
-                            tooltip: 'Compartir cronograma',
-                          ),
-                        TextButton.icon(
-                          onPressed: () async {
-                            final item = crono.historial.first;
-                            await crono.consultarCronograma(item.documento, item.tipodoc);
-                            if (context.mounted) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const CronogramaDetalleScreen(),
-                                ),
-                              );
-                            }
-                          },
-                          icon: const Icon(Icons.visibility, color: AppTheme.azulMarino),
-                          label: const Text('Ver completo'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppTheme.azulMarino,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                if (crono.isLoading)
-                  const LoadingWidget(message: 'Cargando cuotas...')
-                else if (crono.cronogramaActual != null)
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: crono.cronogramaActual!.cuotas.length,
-                    itemBuilder: (context, index) {
-                      final cuota = crono.cronogramaActual!.cuotas[index];
-                      final indexPrimerPendiente = crono.cronogramaActual!.cuotas
-                          .indexWhere((c) => c.estado.toLowerCase() == 'p');
-                      final isDeTurno = index == indexPrimerPendiente;
-                      final isProxima = index == indexPrimerPendiente;
-
-                      return CuotaCard(
-                        cuota: cuota,
-                        isProxima: isProxima,
-                        isCuotaDeTurno: isDeTurno,
-                        onPayPressed: () => _confirmarPago(context, crono, cuota),
-                      );
-                    },
-                  )
-                else
-                  const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Center(
-                        child: Text('No se pudieron cargar los detalles del cronograma.'),
-                      ),
-                    ),
-                  ),
-              ],
-
-              // Parámetros
-              if (crono.parametros != null) ...[
-                const SizedBox(height: 20),
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.settings, color: AppTheme.azulMarino),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Parámetros vigentes del sistema',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 4),
-                            Text(
-                              'IGV: ${crono.parametros!['igv']}%  |  Tasa de Interés: ${crono.parametros!['tasaInteres']}%',
-                              style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 40),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _confirmarPago(BuildContext context, CronogramaProvider provider, Cuota cuota) {
-    final currencyFormat = NumberFormat.currency(locale: 'es_PE', symbol: 'S/ ');
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Simular Pago de Cuota'),
-        content: Text('¿Está seguro de simular el pago de la Cuota N° ${cuota.nroCuota} por un importe total de ${currencyFormat.format(cuota.valorCuota)}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final doc = provider.cronogramaActual!.documento;
-              final type = provider.cronogramaActual!.tipodoc;
-              final success = await provider.pagarCuota(doc, type, cuota.nroCuota);
-              if (context.mounted) {
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Pago de la Cuota N° ${cuota.nroCuota} registrado con éxito.'),
-                      backgroundColor: AppTheme.verdePago,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(provider.errorMessage ?? 'Error al procesar pago'),
-                      backgroundColor: AppTheme.rojoError,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Confirmar Pago'),
-          ),
-        ],
       ),
     );
   }
@@ -511,82 +306,6 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
               auth.logout();
             },
             child: const Text('Salir'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _SummaryCard(
-      {required this.icon,
-      required this.label,
-      required this.value,
-      required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: color, size: 28),
-              const SizedBox(height: 8),
-              Text(label,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-              const SizedBox(height: 4),
-              Text(value,
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DeudaRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isBold;
-
-  const _DeudaRow({
-    required this.label,
-    required this.value,
-    this.isBold = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 13,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              fontSize: 13,
-              color: isBold ? AppTheme.azulMarino : Colors.grey[800],
-            ),
           ),
         ],
       ),
