@@ -15,7 +15,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _clienteCtrl = TextEditingController();
-  final _nombreCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
   bool _obscurePassword = true;
@@ -36,7 +35,6 @@ class _RegisterScreenState extends State<RegisterScreen>
   @override
   void dispose() {
     _clienteCtrl.dispose();
-    _nombreCtrl.dispose();
     _passwordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
     _animCtrl.dispose();
@@ -60,7 +58,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     final auth = context.read<AuthProvider>();
     final success = await auth.register(
       cliente: _clienteCtrl.text.trim().toUpperCase(),
-      nombre: _nombreCtrl.text.trim(),
       password: _passwordCtrl.text,
     );
 
@@ -182,27 +179,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                             textInputAction: TextInputAction.next,
                             autocorrect: false,
                             textCapitalization: TextCapitalization.characters,
-                          ),
-                          const SizedBox(height: 16),
-                          // Nombre Completo
-                          TextFormField(
-                            controller: _nombreCtrl,
-                            decoration: const InputDecoration(
-                              labelText: 'Nombre Completo',
-                              prefixIcon: Icon(Icons.person_outlined),
-                              hintText: 'Ej. Juan Perez',
-                            ),
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty) {
-                                return 'El nombre es requerido';
-                              }
-                              if (v.trim().length < 3) {
-                                return 'El nombre debe tener al menos 3 caracteres';
-                              }
-                              return null;
-                            },
-                            textInputAction: TextInputAction.next,
-                            autocorrect: false,
                           ),
                           const SizedBox(height: 16),
                           // Contraseña

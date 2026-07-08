@@ -110,9 +110,43 @@ const authController = {
    */
   register: async (req, res) => {
     try {
-      const { cliente, password, nombre } = req.body;
+      const { cliente, password } = req.body;
       const clienteId = cliente.trim().toUpperCase();
-      const nombreCliente = nombre?.trim() || `Cliente ${clienteId}`;
+
+      // Mapeo de nombres de clientes (basado en datos de prueba)
+      const nombresClientes = {
+        'CL01': 'Juan Perez',
+        'CL02': 'Maria Garcia',
+        'CL03': 'Carlos Lopez',
+        'CL04': 'Ana Rodriguez',
+        'CL05': 'Pedro Martinez',
+        'CL06': 'Luisa Fernandez',
+        'CL07': 'Roberto Diaz',
+        'CL08': 'Carmen Silva',
+        'CL09': 'Jorge Mendoza',
+        'CL10': 'Patricia Ramos',
+        'CL11': 'Miguel Torres',
+        'CL12': 'Laura Castro',
+        'CL13': 'Fernando Vargas',
+        'CL14': 'Sofia Morales',
+        'CL15': 'Diego Reyes',
+        'CL16': 'Andrea Ortiz',
+        'CL17': 'Ricardo Jimenez',
+        'CL18': 'Monica Navarro',
+        'CL19': 'Alejandro Cruz',
+        'CL20': 'Valentina Flores',
+        'CL21': 'Sergio Rios',
+        'CL22': 'Daniela Guzman',
+        'CL23': 'Hugo Pacheco',
+        'CL24': 'Camila Soto',
+        'CL25': 'Oscar Medina',
+        'CL26': 'Lucia Herrera',
+        'CL27': 'Bruno Castillo',
+        'CL28': 'Hector Castillo',
+        'CL29': 'Silvia Lozano',
+        'CL30': 'Rosa Mendez',
+      };
+      const nombreCliente = nombresClientes[clienteId] || `Cliente ${clienteId}`;
 
       // 1. Verificar si el cliente existe en la base de datos (tabla documento)
       const docResult = await query(
