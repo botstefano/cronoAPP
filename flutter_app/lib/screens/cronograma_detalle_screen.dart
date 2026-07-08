@@ -89,6 +89,10 @@ class CronogramaDetalleScreen extends StatelessWidget {
       backgroundColor: AppTheme.grisClaro,
       appBar: AppBar(
         title: const Text('Detalles del Cronograma'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           if (c != null)
             IconButton(
