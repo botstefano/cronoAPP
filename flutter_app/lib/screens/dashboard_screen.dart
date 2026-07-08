@@ -282,7 +282,6 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                     ),
                   ),
               ],
-            ],
           ),
         ),
       ),
