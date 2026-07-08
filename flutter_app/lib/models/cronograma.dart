@@ -113,7 +113,7 @@ class HistorialItem {
     return HistorialItem(
       documento: json['documento'],
       tipodoc: json['tipodoc'],
-      totalCuotas: json['totalCuotas'],
+      totalCuotas: int.parse(json['totalCuotas'].toString()),
       totalImporte: double.parse(json['totalImporte'].toString()),
       totalConInteres: double.parse(json['totalConInteres'].toString()),
       primerVencimiento: json['primerVencimiento'] != null

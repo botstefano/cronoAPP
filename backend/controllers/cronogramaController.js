@@ -300,14 +300,14 @@ const cronogramaController = {
       }
 
       // Ordenar por número de cuota
-      cuotasPendientes.sort((a, b) => a.NroCuota - b.NroCuota);
+      cuotasPendientes.sort((a, b) => a.nrocuota - b.nrocuota);
       const cuotaDeTurno = cuotasPendientes[0];
 
       // 4. Verificar si la cuota solicitada es de turno
-      if (cuotaNum !== cuotaDeTurno.NroCuota) {
+      if (cuotaNum !== cuotaDeTurno.nrocuota) {
         return res.status(400).json({
           success: false,
-          message: `Debe pagar la cuota de turno correspondiente. La cuota a pagar actualmente es la N° ${cuotaDeTurno.NroCuota}.`,
+          message: `Debe pagar la cuota de turno correspondiente. La cuota a pagar actualmente es la N° ${cuotaDeTurno.nrocuota}.`,
         });
       }
 

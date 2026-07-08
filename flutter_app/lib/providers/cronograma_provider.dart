@@ -90,12 +90,16 @@ class CronogramaProvider extends ChangeNotifier {
 
   Future<void> loadHistorial() async {
     _loadingHistorial = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
       _historial = await _apiService.getHistorial();
+      print('Historial cargado: ${_historial.length} items');
     } catch (e) {
-      // Silencioso — el historial es secundario
+      print('Error cargando historial: $e');
+      _errorMessage = extractErrorMessage(e);
+      _historial = [];
     } finally {
       _loadingHistorial = false;
       notifyListeners();
