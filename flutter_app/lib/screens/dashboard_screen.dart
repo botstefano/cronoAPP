@@ -282,6 +282,69 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                 ),
                 const SizedBox(height: 12),
 
+                // Lista de documentos para generar nuevos cronogramas
+                if (crono.documentosCliente.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.folder_open, color: AppTheme.azulMarino, size: 28),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Tus Documentos (${crono.documentosCliente.length})',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 24),
+                          Text(
+                            'Selecciona un documento para generar su cronograma de pagos.',
+                            style: TextStyle(color: Colors.grey[600], height: 1.4),
+                          ),
+                          const SizedBox(height: 16),
+                          ...crono.documentosCliente.map((doc) {
+                            final docNum = doc['documento'];
+                            final tipoDoc = doc['tipodoc'];
+                            final totalDeuda = double.parse(doc['totaldeuda']?.toString() ?? '0.0');
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: AppTheme.azulMarino.withOpacity(0.1),
+                                  child: Text(tipoDoc, style: TextStyle(color: AppTheme.azulMarino, fontWeight: FontWeight.bold)),
+                                ),
+                                title: Text(docNum),
+                                subtitle: Text('Deuda: ${currencyFormat.format(totalDeuda)}'),
+                                trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => GenerarCronogramaScreen(documento: docNum, tipodoc: tipoDoc)),
+                                  );
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+
                 // Próximo Vencimiento
                 if (proximaFecha != null && proximoMonto != null)
                   Card(
