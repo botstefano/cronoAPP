@@ -25,16 +25,11 @@ router.post(
 router.post(
   '/register',
   [
-    body('documento')
+    body('cliente')
       .trim()
-      .notEmpty().withMessage('El número de documento es requerido')
-      .isLength({ min: 1, max: 9 }).withMessage('El documento debe tener máximo 9 caracteres')
-      .matches(/^[A-Z0-9]+$/i).withMessage('El documento solo puede contener letras y números'),
-    body('tipodoc')
-      .trim()
-      .notEmpty().withMessage('El tipo de documento es requerido')
-      .isLength({ min: 1, max: 1 }).withMessage('El tipo de documento debe ser un carácter')
-      .isIn(['F', 'B', 'C']).withMessage('Tipo de documento inválido. Use F, B o C'),
+      .notEmpty().withMessage('El código de cliente es requerido')
+      .isLength({ min: 3, max: 10 }).withMessage('El código de cliente debe tener entre 3 y 10 caracteres')
+      .matches(/^CL\d{2}$/i).withMessage('El código de cliente debe tener formato CL00 (ej: CL01, CL02)'),
     body('password')
       .notEmpty().withMessage('La contraseña es requerida')
       .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres'),

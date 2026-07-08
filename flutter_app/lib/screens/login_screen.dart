@@ -133,13 +133,19 @@ class _LoginScreenState extends State<LoginScreen>
                         TextFormField(
                           controller: _usernameCtrl,
                           decoration: const InputDecoration(
-                            labelText: 'Número de Documento',
-                            prefixIcon: Icon(Icons.assignment_outlined),
-                            hintText: 'Ej. F00000001',
+                            labelText: 'Código de Cliente',
+                            prefixIcon: Icon(Icons.business_outlined),
+                            hintText: 'Ej. CL01, CL02, CL03...',
                           ),
-                          validator: Validators.username,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return 'El código de cliente es requerido';
+                            }
+                            return null;
+                          },
                           textInputAction: TextInputAction.next,
                           autocorrect: false,
+                          textCapitalization: TextCapitalization.characters,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
