@@ -9,7 +9,7 @@ const cronogramaController = {
   generar: async (req, res) => {
     const { documento, tipodoc, nroCuotas } = req.body;
     const user = req.user.username;
-    const userClient = req.user.nombre;
+    const userClient = req.user.clienteId; // Usar clienteId del JWT
 
     try {
       logger.info(`[${user}] Generando cronograma: doc=${documento}, tipo=${tipodoc}, cuotas=${nroCuotas}`);
