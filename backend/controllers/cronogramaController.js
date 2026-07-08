@@ -285,7 +285,7 @@ const cronogramaController = {
   pagarCuota: async (req, res) => {
     const { documento, tipodoc, nroCuota } = req.body;
     const user = req.user.username;
-    const userClient = req.user.nombre;
+    const userClient = req.user.clienteId; // Usar clienteId del JWT
     const cuotaNum = parseInt(nroCuota);
 
     try {
