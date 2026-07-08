@@ -101,7 +101,7 @@ const cronogramaController = {
   consultar: async (req, res) => {
     const { documento, tipodoc } = req.params;
     const user = req.user.username;
-    const userClient = req.user.nombre;
+    const userClient = req.user.clienteId; // Usar clienteId del JWT
 
     try {
       // Validar que el documento pertenece al usuario
@@ -112,7 +112,7 @@ const cronogramaController = {
           message: 'Documento no encontrado',
         });
       }
-      if (doc.cliente !== userClient && doc.documento.trim() !== user) {
+      if (doc.cliente !== userClient) {
         logger.warn(`[${user}] Intento no autorizado de consultar cronograma para doc=${documento}`);
         return res.status(403).json({
           success: false,
@@ -162,7 +162,7 @@ const cronogramaController = {
       const page = parseInt(req.query.page) || 1;
       const pageSize = Math.min(parseInt(req.query.pageSize) || 20, 100);
       const user = req.user.username;
-      const userClient = req.user.nombre;
+      const userClient = req.user.clienteId; // Usar clienteId del JWT
 
       const result = await Cronograma.historial(userClient, user, page, pageSize);
 
