@@ -48,11 +48,11 @@ class Cronograma {
         `SELECT 
            c.documento, 
            c.tipodoc,
-           COUNT(c.nrocuota) AS totalcuotas,
-           SUM(c.importe) AS totalimporte,
-           SUM(c.importe + c.interes + c.igvinteres) AS totalconinteres,
-           MIN(c.fevence) AS primervencimiento,
-           MAX(c.fevence) AS ultimovencimiento,
+           COUNT(c.nrocuota) AS "totalCuotas",
+           SUM(c.importe) AS "totalImporte",
+           SUM(c.importe + c.interes + c.igvinteres) AS "totalConInteres",
+           MIN(c.fevence) AS "primerVencimiento",
+           MAX(c.fevence) AS "ultimoVencimiento",
            d.cliente
          FROM cronograma c
          LEFT JOIN documento d ON c.documento = d.documento AND c.tipodoc = d.tipodoc

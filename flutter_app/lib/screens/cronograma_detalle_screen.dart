@@ -230,8 +230,14 @@ class CronogramaDetalleScreen extends StatelessWidget {
                   // ─── Botones de Acción ────────────────────────────
                   ElevatedButton(
                     onPressed: () {
-                      // Volver al Dashboard (pantalla principal)
+                      // Volver al Dashboard y forzar recarga
                       Navigator.of(context).popUntil((route) => route.isFirst);
+                      // Forzar recarga después de un pequeño delay
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        if (context.mounted) {
+                          context.read<CronogramaProvider>().loadHistorial();
+                        }
+                      });
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.azulMarino,
