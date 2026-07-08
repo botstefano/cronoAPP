@@ -11,7 +11,7 @@ class User {
   static async findByUsername(username) {
     try {
       const result = await query(
-        `SELECT id, username, password_hash, nombre, activo 
+        `SELECT id, username, password_hash, nombre, activo, cliente_id 
          FROM usuarios 
          WHERE username = $1 AND activo = true`,
         [username]

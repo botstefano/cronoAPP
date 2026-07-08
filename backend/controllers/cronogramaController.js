@@ -215,7 +215,13 @@ const cronogramaController = {
    */
   getDocumentosCliente: async (req, res) => {
     try {
-      const clienteId = req.user.nombre; // cliente_id del usuario
+      const clienteId = req.user.clienteId; // cliente_id del usuario del JWT
+      if (!clienteId) {
+        return res.status(400).json({
+          success: false,
+          message: 'El usuario no tiene un cliente_id asociado',
+        });
+      }
       const documentos = await Cronograma.getDocumentosCliente(clienteId);
 
       res.json({

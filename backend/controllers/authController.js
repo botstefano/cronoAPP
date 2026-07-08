@@ -35,6 +35,7 @@ const authController = {
           id: user.id,
           username: user.username,
           nombre: user.nombre,
+          clienteId: user.cliente_id, // Incluir cliente_id en el JWT
         },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
