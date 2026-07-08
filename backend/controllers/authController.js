@@ -112,6 +112,7 @@ const authController = {
     try {
       const { cliente, password } = req.body;
       const clienteId = cliente.trim().toUpperCase();
+      logger.info(`Registrando cliente: ${clienteId}`);
 
       // Mapeo de nombres de clientes (basado en datos de prueba)
       const nombresClientes = {
@@ -147,6 +148,7 @@ const authController = {
         'CL30': 'Rosa Mendez',
       };
       const nombreCliente = nombresClientes[clienteId] || `Cliente ${clienteId}`;
+      logger.info(`Nombre asignado: ${nombreCliente} para cliente ${clienteId}`);
 
       // 1. Verificar si el cliente existe en la base de datos (tabla documento)
       const docResult = await query(
