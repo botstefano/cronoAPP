@@ -109,25 +109,22 @@ const authController = {
    */
   register: async (req, res) => {
     try {
-      const { documento, tipodoc, password } = req.body;
-      const username = documento.trim();
+      const { cliente, password } = req.body;
+      const clienteId = cliente.trim().toUpperCase();
 
-      // 1. Verificar si el documento existe en la base de datos (tabla documento)
+      // 1. Verificar si el cliente existe en la base de datos (tabla documento)
       const docResult = await query(
-        `SELECT cliente FROM documento WHERE documento = $1 AND tipodoc = $2`,
-        [username, tipodoc]
+        `SELECT DISTINCT cliente FROM documento WHERE cliente = $1`,
+        [clienteId]
       );
 
-      const doc = docResult.rows[0];
-      if (!doc) {
-        logger.warn(`Intento de registro fallido: documento ${username} (${tipodoc}) no existe.`);
+      if (docResult.rows.length === 0) {
+        logger.warn(`Intento de registro fallido: cliente ${clienteId} no existe.`);
         return res.status(400).json({
           success: false,
-          message: 'El documento ingresado no existe en el sistema',
+          message: 'El cliente ingresado no existe en el sistema',
         });
       }
-
-      const clienteId = doc.cliente;
 
       // 2. Verificar si el cliente tiene deuda pendiente
       const tieneDeuda = await User.clienteTieneDeuda(clienteId);
@@ -139,32 +136,26 @@ const authController = {
         });
       }
 
-      // 3. Verificar si el documento ya está registrado como usuario
-      const existingUser = await User.findByUsername(username);
+      // 3. Verificar si el cliente ya está registrado como usuario
+      const existingUser = await User.findByUsername(clienteId);
       if (existingUser) {
-        logger.warn(`Intento de registro fallido: documento ${username} ya registrado.`);
+        logger.warn(`Intento de registro fallido: cliente ${clienteId} ya registrado.`);
         return res.status(409).json({
           success: false,
-          message: 'El documento ya está registrado en el sistema',
+          message: 'El cliente ya está registrado en el sistema',
         });
       }
 
       // 4. Crear contraseña encriptada y registrar
       const passwordHash = await User.hashPassword(password);
-      const nombreCliente = clienteId ? clienteId.trim() : `Cliente ${username}`;
+      const nombreCliente = `Cliente ${clienteId}`;
 
-      const created = await User.register(username, passwordHash, nombreCliente);
+      const created = await User.register(clienteId, passwordHash, nombreCliente, clienteId);
       if (!created) {
         throw new Error('No se pudo insertar el usuario');
       }
 
-      // 5. Actualizar el usuario con el cliente_id
-      await query(
-        `UPDATE usuarios SET cliente_id = $1 WHERE username = $2`,
-        [clienteId, username]
-      );
-
-      logger.info(`Usuario registrado exitosamente: ${username} (${nombreCliente}, cliente: ${clienteId})`);
+      logger.info(`Usuario registrado exitosamente: ${clienteId} (${nombreCliente})`);
       res.status(201).json({
         success: true,
         message: 'Usuario registrado exitosamente',

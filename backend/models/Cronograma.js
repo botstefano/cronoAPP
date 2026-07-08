@@ -136,6 +136,32 @@ class Cronograma {
       throw error;
     }
   }
+
+  /**
+   * Obtiene todos los documentos de un cliente
+   */
+  static async getDocumentosCliente(clienteId) {
+    try {
+      const result = await query(
+        `SELECT 
+           d.documento, 
+           d.tipodoc,
+           (SELECT SUM(dd.cantidad * dd.precunit)
+           FROM detadoc dd
+           WHERE dd.documento = d.documento AND dd.tipodoc = d.tipodoc) AS totalDeuda,
+           d.pagado,
+           d.fecha
+         FROM documento d
+         WHERE d.cliente = $1
+         ORDER BY d.fecha DESC`,
+        [clienteId]
+      );
+      return result.rows;
+    } catch (error) {
+      logger.error(`Error obteniendo documentos del cliente ${clienteId}: ${error.message}`);
+      throw error;
+    }
+  }
 }
 
 module.exports = Cronograma;

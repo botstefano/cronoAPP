@@ -59,6 +59,9 @@ router.get(
 // GET /api/parametros
 router.get('/parametros', cronogramaController.getParametros);
 
+// GET /api/documentos-cliente
+router.get('/documentos-cliente', cronogramaController.getDocumentosCliente);
+
 // POST /api/documento/validar
 router.post(
   '/documento/validar',

@@ -28,6 +28,12 @@ class CronogramaProvider extends ChangeNotifier {
   Map<String, dynamic>? get documentoInfo => _documentoInfo;
   bool get loadingDocumentoInfo => _loadingDocumentoInfo;
 
+  List<dynamic> _documentosCliente = [];
+  bool _loadingDocumentosCliente = false;
+
+  List<dynamic> get documentosCliente => _documentosCliente;
+  bool get loadingDocumentosCliente => _loadingDocumentosCliente;
+
   CronogramaProvider(this._apiService);
 
   Future<void> loadDocumentoInfo(String documento, String tipodoc) async {
@@ -111,6 +117,23 @@ class CronogramaProvider extends ChangeNotifier {
       _parametros = await _apiService.getParametros();
       notifyListeners();
     } catch (_) {}
+  }
+
+  Future<void> loadDocumentosCliente() async {
+    _loadingDocumentosCliente = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _documentosCliente = await _apiService.getDocumentosCliente();
+    } catch (e) {
+      print('Error cargando documentos del cliente: $e');
+      _errorMessage = extractErrorMessage(e);
+      _documentosCliente = [];
+    } finally {
+      _loadingDocumentosCliente = false;
+      notifyListeners();
+    }
   }
 
   Future<bool> pagarCuota(String documento, String tipodoc, int nroCuota) async {

@@ -96,15 +96,18 @@ class ApiService {
   }
 
   Future<void> register({
-    required String documento,
-    required String tipodoc,
+    required String cliente,
     required String password,
   }) async {
     await _dio.post('/auth/register', data: {
-      'documento': documento,
-      'tipodoc': tipodoc,
+      'cliente': cliente,
       'password': password,
     });
+  }
+
+  Future<List<dynamic>> getDocumentosCliente() async {
+    final response = await _dio.get('/cronograma/documentos-cliente');
+    return response.data['data'] as List<dynamic>;
   }
 
   Future<void> updateProfile({

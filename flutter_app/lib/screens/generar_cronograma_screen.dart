@@ -10,7 +10,14 @@ import '../widgets/loading_widget.dart';
 import 'cronograma_detalle_screen.dart';
 
 class GenerarCronogramaScreen extends StatefulWidget {
-  const GenerarCronogramaScreen({super.key});
+  final String? documento;
+  final String? tipodoc;
+
+  const GenerarCronogramaScreen({
+    super.key,
+    this.documento,
+    this.tipodoc,
+  });
 
   @override
   State<GenerarCronogramaScreen> createState() =>
@@ -26,23 +33,35 @@ class _GenerarCronogramaScreenState extends State<GenerarCronogramaScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = Provider.of<AuthProvider>(context, listen: false).user;
-      if (user != null) {
-        _documentoCtrl.text = user.username.trim();
-        String type = 'F';
-        if (user.username.isNotEmpty) {
-          final firstChar = user.username.substring(0, 1).toUpperCase();
-          if (['F', 'B', 'C'].contains(firstChar)) {
-            type = firstChar;
-          }
-        }
-        setState(() => _tipodoc = type);
-        
+    // Si se proporcionaron documento y tipodoc, usarlos
+    if (widget.documento != null && widget.tipodoc != null) {
+      _documentoCtrl.text = widget.documento!;
+      _tipodoc = widget.tipodoc!;
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         // Cargar información del documento y su deuda en segundo plano
-        context.read<CronogramaProvider>().loadDocumentoInfo(user.username, type);
-      }
-    });
+        context.read<CronogramaProvider>().loadDocumentoInfo(widget.documento!, widget.tipodoc!);
+      });
+    } else {
+      // Si no, usar el username del usuario (comportamiento anterior)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final user = Provider.of<AuthProvider>(context, listen: false).user;
+        if (user != null) {
+          _documentoCtrl.text = user.username.trim();
+          String type = 'F';
+          if (user.username.isNotEmpty) {
+            final firstChar = user.username.substring(0, 1).toUpperCase();
+            if (['F', 'B', 'C'].contains(firstChar)) {
+              type = firstChar;
+            }
+          }
+          setState(() => _tipodoc = type);
+          
+          // Cargar información del documento y su deuda en segundo plano
+          context.read<CronogramaProvider>().loadDocumentoInfo(user.username, type);
+        }
+      });
+    }
   }
 
   @override

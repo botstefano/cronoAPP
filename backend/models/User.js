@@ -23,13 +23,13 @@ class User {
     }
   }
 
-  static async register(username, passwordHash, nombre) {
+  static async register(username, passwordHash, nombre, clienteId = null) {
     try {
       const result = await query(
-        `INSERT INTO usuarios (username, password_hash, nombre, activo)
-         VALUES ($1, $2, $3, true)
+        `INSERT INTO usuarios (username, password_hash, nombre, activo, cliente_id)
+         VALUES ($1, $2, $3, true, $4)
          RETURNING id`,
-        [username, passwordHash, nombre]
+        [username, passwordHash, nombre, clienteId]
       );
       return result.rowCount > 0;
     } catch (error) {

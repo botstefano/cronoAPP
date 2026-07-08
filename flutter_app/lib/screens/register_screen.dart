@@ -14,18 +14,11 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _documentoCtrl = TextEditingController();
+  final _clienteCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
-  String _tipodoc = 'F';
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-
-  final List<Map<String, String>> _tiposDoc = [
-    {'value': 'F', 'label': 'F — Factura'},
-    {'value': 'B', 'label': 'B — Boleta'},
-    {'value': 'C', 'label': 'C — Comprobante'},
-  ];
 
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
@@ -41,7 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   @override
   void dispose() {
-    _documentoCtrl.dispose();
+    _clienteCtrl.dispose();
     _passwordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
     _animCtrl.dispose();
@@ -64,8 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
     final auth = context.read<AuthProvider>();
     final success = await auth.register(
-      documento: _documentoCtrl.text.trim().toUpperCase(),
-      tipodoc: _tipodoc,
+      cliente: _clienteCtrl.text.trim().toUpperCase(),
       password: _passwordCtrl.text,
     );
 
@@ -133,7 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Asocia tu documento para ingresar',
+                      'Ingresa tu código de cliente para registrar tu cuenta',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.8),
                         fontSize: 14,
@@ -167,42 +159,26 @@ class _RegisterScreenState extends State<RegisterScreen>
                             ),
                           ),
                           const SizedBox(height: 20),
-                          // Nro Documento
+                          // Código de Cliente
                           TextFormField(
-                            controller: _documentoCtrl,
+                            controller: _clienteCtrl,
                             decoration: const InputDecoration(
-                              labelText: 'Número de Documento',
-                              prefixIcon: Icon(Icons.assignment_outlined),
-                              hintText: 'Ej. F00000001 o B00000001',
+                              labelText: 'Código de Cliente',
+                              prefixIcon: Icon(Icons.business_outlined),
+                              hintText: 'Ej. CL01, CL02, CL03...',
                             ),
                             validator: (v) {
                               if (v == null || v.trim().isEmpty) {
-                                return 'El número de documento es requerido';
+                                return 'El código de cliente es requerido';
+                              }
+                              if (!v.trim().toUpperCase().startsWith('CL')) {
+                                return 'El código debe comenzar con CL';
                               }
                               return null;
                             },
                             textInputAction: TextInputAction.next,
                             autocorrect: false,
-                          ),
-                          const SizedBox(height: 16),
-                          // Tipo de Documento Dropdown
-                          DropdownButtonFormField<String>(
-                            value: _tipodoc,
-                            decoration: const InputDecoration(
-                              labelText: 'Tipo de Documento',
-                              prefixIcon: Icon(Icons.description_outlined),
-                            ),
-                            items: _tiposDoc.map((tipo) {
-                              return DropdownMenuItem<String>(
-                                value: tipo['value'],
-                                child: Text(tipo['label']!),
-                              );
-                            }).toList(),
-                            onChanged: (v) {
-                              if (v != null) {
-                                setState(() => _tipodoc = v);
-                              }
-                            },
+                            textCapitalization: TextCapitalization.characters,
                           ),
                           const SizedBox(height: 16),
                           // Contraseña

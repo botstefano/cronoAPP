@@ -22,8 +22,9 @@ const cronogramaController = {
           message: 'Documento ingresado no existe',
         });
       }
-      if (doc.cliente !== userClient && doc.documento.trim() !== user) {
-        logger.warn(`[${user}] Intento no autorizado de generar cronograma para doc=${documento}`);
+      // Validar que el documento pertenezca al cliente del usuario
+      if (doc.cliente !== userClient) {
+        logger.warn(`[${user}] Intento no autorizado de generar cronograma para doc=${documento} (cliente=${doc.cliente})`);
         return res.status(403).json({
           success: false,
           message: 'No tiene permisos para operar sobre este documento',
@@ -209,6 +210,25 @@ const cronogramaController = {
   },
 
   /**
+   * GET /api/documentos-cliente
+   * Obtiene todos los documentos del cliente autenticado
+   */
+  getDocumentosCliente: async (req, res) => {
+    try {
+      const clienteId = req.user.nombre; // cliente_id del usuario
+      const documentos = await Cronograma.getDocumentosCliente(clienteId);
+
+      res.json({
+        success: true,
+        data: documentos,
+      });
+    } catch (error) {
+      logger.error(`Error obteniendo documentos del cliente: ${error.message}`);
+      res.status(500).json({ success: false, message: 'Error interno' });
+    }
+  },
+
+  /**
    * POST /api/documento/validar
    * Body: { documento, tipodoc }
    */
@@ -273,8 +293,9 @@ const cronogramaController = {
           message: 'Documento no encontrado',
         });
       }
-      if (doc.cliente !== userClient && doc.documento.trim() !== user) {
-        logger.warn(`[${user}] Intento no autorizado de pagar cuota para doc=${documento}`);
+      // Validar que el documento pertenezca al cliente del usuario
+      if (doc.cliente !== userClient) {
+        logger.warn(`[${user}] Intento no autorizado de pagar cuota para doc=${documento} (cliente=${doc.cliente})`);
         return res.status(403).json({
           success: false,
           message: 'No tiene permisos para pagar cuotas de este documento',

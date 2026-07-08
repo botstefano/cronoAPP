@@ -46,29 +46,25 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     final provider = context.read<CronogramaProvider>();
     final auth = context.read<AuthProvider>();
     
-    // 1. Cargar historial
+    // 1. Cargar documentos del cliente
+    await provider.loadDocumentosCliente();
+    
+    // 2. Cargar historial
     await provider.loadHistorial();
     
-    // 2. Si ya tiene cronograma, consultar los detalles completos del mismo
+    // 3. Si ya tiene cronograma, consultar los detalles completos del mismo
     if (provider.historial.isNotEmpty) {
       final item = provider.historial.first;
       await provider.consultarCronograma(item.documento, item.tipodoc);
     } else {
-      // Si no tiene cronograma, cargar información de su documento/deuda original
-      if (auth.user != null) {
-        String type = 'F';
-        final docNum = auth.user!.username.trim();
-        if (docNum.isNotEmpty) {
-          final firstChar = docNum.substring(0, 1).toUpperCase();
-          if (['F', 'B', 'C'].contains(firstChar)) {
-            type = firstChar;
-          }
-        }
-        await provider.loadDocumentoInfo(docNum, type);
+      // Si no tiene cronograma, cargar información del primer documento
+      if (provider.documentosCliente.isNotEmpty) {
+        final doc = provider.documentosCliente.first;
+        await provider.loadDocumentoInfo(doc['documento'], doc['tipodoc']);
       }
     }
     
-    // 3. Cargar parámetros
+    // 4. Cargar parámetros
     await provider.loadParametros();
   }
 
@@ -154,7 +150,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
             children: [
               // ─── CASO 1: NO TIENE CRONOGRAMA GENERADO ───────────────────
               if (!tieneCronograma) ...[
-                if (crono.loadingDocumentoInfo)
+                if (crono.loadingDocumentosCliente)
                   const Card(
                     child: Padding(
                       padding: EdgeInsets.all(32),
@@ -163,94 +159,75 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                           children: [
                             CircularProgressIndicator(),
                             SizedBox(height: 16),
-                            Text('Cargando información de tu deuda...'),
+                            Text('Cargando tus documentos...'),
                           ],
                         ),
                       ),
                     ),
                   )
-                else if (crono.documentoInfo != null)
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 3,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
+                else if (crono.documentosCliente.isNotEmpty)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 3,
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.info_outline, color: AppTheme.azulMarino, size: 28),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Deuda Pendiente',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[800],
-                                ),
+                              Row(
+                                children: [
+                                  const Icon(Icons.folder_open, color: AppTheme.azulMarino, size: 28),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Tus Documentos (${crono.documentosCliente.length})',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[800],
+                                    ),
+                                  ),
+                                ],
                               ),
+                              const Divider(height: 24),
+                              Text(
+                                'Selecciona un documento para generar su cronograma de pagos.',
+                                style: TextStyle(color: Colors.grey[600], height: 1.4),
+                              ),
+                              const SizedBox(height: 16),
+                              ...crono.documentosCliente.map((doc) {
+                                final docNum = doc['documento'];
+                                final tipoDoc = doc['tipodoc'];
+                                final totalDeuda = double.parse(doc['totaldeuda']?.toString() ?? '0.0');
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: AppTheme.azulMarino.withOpacity(0.1),
+                                      child: Text(tipoDoc, style: TextStyle(color: AppTheme.azulMarino, fontWeight: FontWeight.bold)),
+                                    ),
+                                    title: Text(docNum),
+                                    subtitle: Text('Deuda: ${currencyFormat.format(totalDeuda)}'),
+                                    trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                                    onTap: () {
+                                      // Navegar a generar cronograma con este documento
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => GenerarCronogramaScreen(documento: docNum, tipodoc: tipoDoc)),
+                                      );
+                                    },
+                                  ),
+                                );
+                              }).toList(),
                             ],
                           ),
-                          const Divider(height: 24),
-                          Text(
-                            'Actualmente tienes una deuda pendiente de pago asociada a tu cuenta corporativa. Puedes fraccionarla en cuotas mensuales para pagarla cómodamente.',
-                            style: TextStyle(color: Colors.grey[600], height: 1.4),
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.azulMarino.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              children: [
-                                _DeudaRow(
-                                  label: 'N° de Documento',
-                                  value: auth.user?.username.trim() ?? '',
-                                ),
-                                _DeudaRow(
-                                  label: 'Tipo de Documento',
-                                  value: getTipoDocNombre(
-                                    auth.user?.username.isNotEmpty == true
-                                        ? auth.user!.username.substring(0, 1).toUpperCase()
-                                        : 'F',
-                                  ),
-                                ),
-                                _DeudaRow(
-                                  label: 'Monto de la Deuda',
-                                  value: currencyFormat.format(
-                                    double.parse(crono.documentoInfo!['totalDeuda']?.toString() ?? '0.0'),
-                                  ),
-                                  isBold: true,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          ElevatedButton.icon(
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const GenerarCronogramaScreen()),
-                            ),
-                            icon: const Icon(Icons.auto_graph),
-                            label: const Text(
-                              'Generar Cronograma de Pagos',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   )
                 else
                   Card(
